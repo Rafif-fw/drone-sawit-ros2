@@ -1,0 +1,72 @@
+{
+  "version": "V20D_TEMPORAL_SECTOR_CONSENSUS",
+  "saved_at": 1783956921.432614,
+  "spawn_map_x": -25.0,
+  "spawn_map_y": 0.0,
+  "landmarks": [
+    {
+      "tree_id": 1,
+      "x": 1.6006614731967521,
+      "y": 13.46778218655321,
+      "map_x": -11.53221781344679,
+      "map_y": 1.6006614731967521,
+      "confirmed": true,
+      "visited": true,
+      "rejected": false,
+      "reject_reason": "",
+      "hits_at_reject": 0,
+      "geometry_hits": 5,
+      "strong_hits": 3,
+      "tof_hits": 0,
+      "score": 328.1031292855943
+    },
+    {
+      "tree_id": 8,
+      "x": 4.082967592850381,
+      "y": 20.743342553258234,
+      "map_x": -4.256657446741766,
+      "map_y": 4.082967592850381,
+      "confirmed": true,
+      "visited": false,
+      "rejected": false,
+      "reject_reason": "",
+      "hits_at_reject": 0,
+      "geometry_hits": 6,
+      "strong_hits": 4,
+      "tof_hits": 0,
+      "score": 329.467768784788
+    },
+    {
+      "tree_id": 9,
+      "x": -6.731783325384079,
+      "y": 18.90465305062184,
+      "map_x": -6.095346949378161,
+      "map_y": -6.731783325384079,
+      "confirmed": true,
+      "visited": false,
+      "rejected": false,
+      "reject_reason": "",
+      "hits_at_reject": 0,
+      "geometry_hits": 6,
+      "strong_hits": 3,
+      "tof_hits": 0,
+      "score": 330.24508267543894
+    },
+    {
+      "tree_id": 11,
+      "x": -4.741290342336126,
+      "y": 7.898391251821902,
+      "map_x": -17.101608748178098,
+      "map_y": -4.741290342336126,
+      "confirmed": true,
+      "visited": false,
+      "rejected": true,
+      "reject_reason": "two_view_stationary_verify_failed hits=0 frames=8 tof=11.26 expected=3.86",
+      "hits_at_reject": 5,
+      "geometry_hits": 5,
+      "strong_hits": 4,
+      "tof_hits": 0,
+      "score": 334.05958195573146
+    }
+  ]
+}

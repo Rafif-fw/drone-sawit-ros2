@@ -1,0 +1,16 @@
+{
+  "method": "YOLO tree.pt + synchronized organized PointCloud2 + central ToF correction",
+  "updated_unix": 1783755419.719414,
+  "visited_count": 1,
+  "trees": [
+    {
+      "id": 9,
+      "local_x": 3.9052967379429004,
+      "local_y": 12.765647848201404,
+      "map_x": -12.234352151798596,
+      "map_y": 3.9052967379429004,
+      "confidence": 0.45056286454200745,
+      "observations": 19
+    }
+  ]
+}

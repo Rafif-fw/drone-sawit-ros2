@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <model name="sawit_sedeng">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://sawit_sedeng/Sawitsedeng.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://sawit_sedeng/Sawitsedeng.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>1.0 1.0 1.0 1.0</diffuse>
+          <specular>0.5 0.5 0.5 1.0</specular>
+          <pbr>
+            <metal>
+              <albedo_map>model://sawit_sedeng/Image_0.png</albedo_map>
+            </metal>
+          </pbr>
+          <blend_mode>add</blend_mode>
+          <alpha_reject>0.5</alpha_reject>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

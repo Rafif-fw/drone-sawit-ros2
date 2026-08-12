@@ -1,0 +1,335 @@
+{
+  "version": "V21H",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1785161370.156884,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 12.52305376220453,
+      "y": -3.123230740201475,
+      "state": "visited",
+      "hits": 110,
+      "strong_hits": 33,
+      "tof_hits": 116,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 317.65768437151473,
+      "position_mad": 0.5515643445938625
+    },
+    {
+      "tree_id": 1,
+      "x": 21.283318393604965,
+      "y": -3.226262129912354,
+      "state": "visited",
+      "hits": 136,
+      "strong_hits": 73,
+      "tof_hits": 132,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 321.02498572655514,
+      "position_mad": 0.44744722695783695
+    },
+    {
+      "tree_id": 2,
+      "x": 20.52004004425869,
+      "y": -11.056676396239743,
+      "state": "visited",
+      "hits": 256,
+      "strong_hits": 72,
+      "tof_hits": 275,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 334.8935000006778,
+      "position_mad": 0.26818791475551024
+    },
+    {
+      "tree_id": 3,
+      "x": 12.799587813397135,
+      "y": -18.604286503271727,
+      "state": "visited",
+      "hits": 246,
+      "strong_hits": 94,
+      "tof_hits": 255,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 335.5343504388105,
+      "position_mad": 0.311288494157532
+    },
+    {
+      "tree_id": 4,
+      "x": 13.293278511389873,
+      "y": -10.743379345436816,
+      "state": "visited",
+      "hits": 246,
+      "strong_hits": 108,
+      "tof_hits": 223,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 340.353266934926,
+      "position_mad": 0.12613905892726815
+    },
+    {
+      "tree_id": 5,
+      "x": 12.839443689677475,
+      "y": -26.621250733797066,
+      "state": "visited",
+      "hits": 182,
+      "strong_hits": 82,
+      "tof_hits": 97,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 345.6127639337588,
+      "position_mad": 0.15298402502541592
+    },
+    {
+      "tree_id": 6,
+      "x": 28.489046644135257,
+      "y": -19.114690830766282,
+      "state": "visited",
+      "hits": 235,
+      "strong_hits": 88,
+      "tof_hits": 263,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 329.73437392845256,
+      "position_mad": 0.24090802804727146
+    },
+    {
+      "tree_id": 7,
+      "x": 29.04700837479389,
+      "y": -10.51026681774489,
+      "state": "visited",
+      "hits": 152,
+      "strong_hits": 65,
+      "tof_hits": 158,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "verify_failures": 0,
+      "last_score": 315.96802234045185,
+      "position_mad": 0.6367630262601507
+    },
+    {
+      "tree_id": 9,
+      "x": 37.055715082735254,
+      "y": -3.3258519380807665,
+      "state": "visited",
+      "hits": 91,
+      "strong_hits": 28,
+      "tof_hits": 105,
+      "sectors": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 329.87855971052227,
+      "position_mad": 0.0436832263725338
+    },
+    {
+      "tree_id": 10,
+      "x": 21.096351795120018,
+      "y": -18.52767916049891,
+      "state": "visited",
+      "hits": 239,
+      "strong_hits": 86,
+      "tof_hits": 233,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 339.0227653787132,
+      "position_mad": 0.48220517889714287
+    },
+    {
+      "tree_id": 11,
+      "x": 28.48752067456765,
+      "y": -27.108517260203318,
+      "state": "visited",
+      "hits": 166,
+      "strong_hits": 58,
+      "tof_hits": 138,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 285.6777468128553,
+      "position_mad": 0.12204482186781127
+    },
+    {
+      "tree_id": 12,
+      "x": 36.63019377052325,
+      "y": -26.677786021750077,
+      "state": "visited",
+      "hits": 120,
+      "strong_hits": 56,
+      "tof_hits": 107,
+      "sectors": [
+        0,
+        1,
+        2,
+        4,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 344.73178110371134,
+      "position_mad": 0.6976266602280065
+    },
+    {
+      "tree_id": 13,
+      "x": 20.53818487842298,
+      "y": -27.14231397883359,
+      "state": "visited",
+      "hits": 212,
+      "strong_hits": 83,
+      "tof_hits": 238,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 339.7732549913123,
+      "position_mad": 0.29120789547508114
+    },
+    {
+      "tree_id": 14,
+      "x": 36.988508197162396,
+      "y": -19.3638461789659,
+      "state": "visited",
+      "hits": 87,
+      "strong_hits": 40,
+      "tof_hits": 76,
+      "sectors": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 264.7533948445184,
+      "position_mad": 0.5318025353449259
+    },
+    {
+      "tree_id": 16,
+      "x": 29.22000207898403,
+      "y": -3.2275327561965654,
+      "state": "visited",
+      "hits": 126,
+      "strong_hits": 62,
+      "tof_hits": 174,
+      "sectors": [
+        0,
+        1,
+        2,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 318.88143948694125,
+      "position_mad": 0.2156568637751272
+    },
+    {
+      "tree_id": 20,
+      "x": 36.8601329945427,
+      "y": -11.378401288035553,
+      "state": "visited",
+      "hits": 99,
+      "strong_hits": 54,
+      "tof_hits": 69,
+      "sectors": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 255.879497850189,
+      "position_mad": 0.21479593296626875
+    }
+  ]
+}

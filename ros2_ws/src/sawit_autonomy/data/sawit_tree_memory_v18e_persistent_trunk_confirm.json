@@ -1,0 +1,17 @@
+{
+  "version": "V18C_full_pointcloud_tof_corrected",
+  "target_tree_count": 16,
+  "takeoff_height": 0.42,
+  "visited_count": 1,
+  "trees": [
+    {
+      "id": 27,
+      "local_x": 11.538874968742588,
+      "local_y": 13.579989470004453,
+      "map_x": -11.420010529995547,
+      "map_y": 11.538874968742588,
+      "obs_count": 12,
+      "score": 285.92691063716467
+    }
+  ]
+}

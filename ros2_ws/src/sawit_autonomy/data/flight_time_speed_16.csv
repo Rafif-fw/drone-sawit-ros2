@@ -1,0 +1,4 @@
+wall_time,label,algorithm_name,run_id,seed,visited,target_count,algorithm_duration_sec,flight_duration_sec,current_speed_at_complete_mps,average_speed_all_flight_mps,average_speed_while_moving_mps,max_horizontal_speed_mps,estimated_horizontal_distance_m,max_altitude_m,speed_samples,status,completed
+2026-07-21 10:20:04,depth321_previous_01,depth_every_message_kalman_321_antistuck,depth321_fix_01,101,16,16,4314.930,4304.852,0.0000,0.0757,0.1307,0.2248,325.662,0.770,195539,completed,1
+2026-07-21 11:51:08,depth321_previous_01,depth_every_message_kalman_direct1m_antistuck,depth_direct_fix_01,101,16,16,3556.890,3546.472,0.0000,0.0879,0.1345,0.2222,311.739,0.727,147641,completed,1
+2026-07-21 15:14:23,depth321_previous_01,,,,16,16,3919.307,3909.733,0.0000,0.0688,0.1242,0.2283,268.853,0.745,158501,completed,1

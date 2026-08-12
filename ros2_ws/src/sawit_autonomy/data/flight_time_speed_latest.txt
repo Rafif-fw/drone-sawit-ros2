@@ -1,0 +1,17 @@
+HASIL MONITOR MISI DRONE SAWIT
+Waktu pencatatan       : 2026-07-21 15:14:23
+Label                  : depth321_previous_01
+Algoritma              : 
+Run ID                 : 
+Seed                   : 
+Kunjungan              : 16/16
+Waktu algoritma        : 3919.307 s (01:05:19.307)
+Waktu penerbangan      : 3909.733 s (01:05:09.733)
+Kecepatan saat selesai : 0.0000 m/s
+Kecepatan rata-rata    : 0.0688 m/s (termasuk hold/scan)
+Rata-rata saat bergerak: 0.1242 m/s
+Kecepatan maksimum     : 0.2283 m/s
+Estimasi jarak mendatar: 268.853 m
+Ketinggian maksimum    : 0.745 m
+Status                 : completed
+CSV                    : /home/rafif/ros2_ws/src/sawit_autonomy/data/flight_time_speed_16.csv

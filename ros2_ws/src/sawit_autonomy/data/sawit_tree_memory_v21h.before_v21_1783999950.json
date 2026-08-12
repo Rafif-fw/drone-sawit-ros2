@@ -1,0 +1,180 @@
+{
+  "version": "V21H1",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1783999252.3860202,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 19.613373397228926,
+      "y": -13.81598343842008,
+      "state": "confirmed",
+      "hits": 28,
+      "strong_hits": 6,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 253.00645191891374,
+      "position_mad": 0.25596627573875175
+    },
+    {
+      "tree_id": 1,
+      "x": 20.77327464730632,
+      "y": 2.2191858029839255,
+      "state": "tentative",
+      "hits": 16,
+      "strong_hits": 2,
+      "tof_hits": 0,
+      "sectors": [
+        0
+      ],
+      "verify_failures": 0,
+      "last_score": 274.825318054043,
+      "position_mad": 0.00785420239709658
+    },
+    {
+      "tree_id": 2,
+      "x": 21.89079412135836,
+      "y": 9.636592232668745,
+      "state": "confirmed",
+      "hits": 27,
+      "strong_hits": 6,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 282.9735602835919,
+      "position_mad": 0.17696476138115255
+    },
+    {
+      "tree_id": 3,
+      "x": 37.15276730691409,
+      "y": -4.602756686734309,
+      "state": "confirmed",
+      "hits": 25,
+      "strong_hits": 14,
+      "tof_hits": 67,
+      "sectors": [
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 313.66974067952356,
+      "position_mad": 0.5372724615432825
+    },
+    {
+      "tree_id": 4,
+      "x": 38.093668047929235,
+      "y": 3.2235159848294472,
+      "state": "confirmed",
+      "hits": 47,
+      "strong_hits": 4,
+      "tof_hits": 57,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 325.8101271247841,
+      "position_mad": 0.12326029135662658
+    },
+    {
+      "tree_id": 5,
+      "x": 38.92565958353309,
+      "y": 11.239535213500666,
+      "state": "confirmed",
+      "hits": 47,
+      "strong_hits": 11,
+      "tof_hits": 0,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 294.0645943325333,
+      "position_mad": 0.1469409255394196
+    },
+    {
+      "tree_id": 6,
+      "x": 29.733839375291865,
+      "y": -3.637492767512232,
+      "state": "confirmed",
+      "hits": 39,
+      "strong_hits": 28,
+      "tof_hits": 57,
+      "sectors": [
+        2,
+        3
+      ],
+      "verify_failures": 0,
+      "last_score": 312.3376437697336,
+      "position_mad": 0.40272689111687243
+    },
+    {
+      "tree_id": 7,
+      "x": 21.667735786860842,
+      "y": -2.9404847675499464,
+      "state": "confirmed",
+      "hits": 37,
+      "strong_hits": 3,
+      "tof_hits": 38,
+      "sectors": [
+        3,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 324.47778172174776,
+      "position_mad": 0.1023185473115219
+    },
+    {
+      "tree_id": 8,
+      "x": 13.647135703859185,
+      "y": -2.075551054554521,
+      "state": "confirmed",
+      "hits": 27,
+      "strong_hits": 3,
+      "tof_hits": 16,
+      "sectors": [
+        3,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 298.6698901813866,
+      "position_mad": 0.24703855007884992
+    },
+    {
+      "tree_id": 9,
+      "x": 28.611900105705217,
+      "y": -11.327744528811719,
+      "state": "confirmed",
+      "hits": 49,
+      "strong_hits": 21,
+      "tof_hits": 107,
+      "sectors": [
+        4,
+        5
+      ],
+      "verify_failures": 0,
+      "last_score": 317.7500193385595,
+      "position_mad": 0.637915907250593
+    },
+    {
+      "tree_id": 10,
+      "x": 36.48200530297959,
+      "y": -12.411124808682857,
+      "state": "confirmed",
+      "hits": 16,
+      "strong_hits": 11,
+      "tof_hits": 31,
+      "sectors": [
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 313.31263581378835,
+      "position_mad": 0.2433926142873227
+    }
+  ]
+}

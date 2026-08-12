@@ -1,0 +1,1543 @@
+#!/usr/bin/env python3
+import math
+import time
+from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional, Tuple
+
+import numpy as np
+import rclpy
+from geometry_msgs.msg import Point, TransformStamped
+from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
+from sensor_msgs.msg import PointCloud2, LaserScan
+from sensor_msgs_py import point_cloud2
+from sklearn.cluster import DBSCAN
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+from visualization_msgs.msg import Marker, MarkerArray
+
+from sawit_autonomy.actual_tree_positions import get_actual_tree_positions_gazebo
+
+
+class State(Enum):
+    WAIT_DATA = 0
+    PRESTREAM = 1
+    TAKEOFF = 2
+    SEARCH = 3
+    APPROACH = 4
+    HOLD_SCAN = 5
+    BACKUP = 6
+    FINISHED = 7
+
+
+@dataclass
+class TreeTrack:
+    tree_id: int
+    x: float
+    y: float
+    z: float
+    confirmations: int
+    confirmed: bool
+    visited: bool
+    last_seen: float
+
+
+class SawitRandomPointCloudNavigator(Node):
+    def __init__(self):
+        super().__init__("sawit_random_pointcloud_navigator")
+
+        # RViz visual alignment only.
+        # Gazebo ENU spawn drone. Ubah 2 angka ini kalau route/drone RViz masih geser dari SDF.
+        self.spawn_x_east = -25.0
+        self.spawn_y_north = 0.0
+
+        # Gazebo x500_0 spawn yaw=0 menghadap arah East.
+        # PX4 local: x=North, y=East. Jadi forward kamera perlu offset +90 deg.
+        self.camera_yaw_offset = math.radians(90.0)
+
+        # V19: auto visual alignment only for RViz comparison.
+        # Ini TIDAK menjadikan actual sebagai waypoint. Ini hanya menggeser frame visual
+        # supaya detected cloud center lebih nyambung dengan actual SDF marker.
+        self.auto_visual_alignment = False
+        self.visual_alignment_ready = False
+        self.auto_spawn_x_east = self.spawn_x_east
+        self.auto_spawn_y_north = self.spawn_y_north
+        self.visual_alignment_min_tracks = 2
+        self.last_visual_align_log = 0.0
+
+        # Flight / mission.
+        self.flight_altitude = -0.55
+        self.max_visited = 16
+        self.visit_distance = 2.0
+        self.approach_standoff = 2.2
+        self.approach_timeout = 300.0
+        self.scan_hold = 0.4
+        self.backup_time = 2.0
+        self.backward_step = 0.90
+        self.max_step = 0.12
+        self.max_yaw_step = math.radians(4.0)
+        self.mission_timeout = 900.0
+        self.land_sent = False
+
+        # Corridor relative to drone start.
+        self.corridor_x_limit = 40.0
+        self.corridor_y_min = 0.0
+        self.corridor_y_max = 40.0
+
+        # V13 INNER SAFE LANES.
+        # Actual tree centers in PX4 local are approximately 8/16/24/32.
+        # Safe lane centers are 12/20/28, between tree rows.
+        # The first point (12,0) is a west-side entry lane, then it enters at (12,12).
+        self.search_wp_index = 0
+        self.search_waypoints_rel = [
+            (12.0, 0.0),
+            (12.0, 12.0),
+            (12.0, 20.0),
+            (12.0, 28.0),
+
+            (20.0, 28.0),
+            (20.0, 20.0),
+            (20.0, 12.0),
+
+            (28.0, 12.0),
+            (28.0, 20.0),
+            (28.0, 28.0),
+
+            (20.0, 28.0),
+            (12.0, 28.0),
+            (12.0, 20.0),
+            (12.0, 12.0),
+        ]
+        self.explore_tolerance = 2.0
+        self.explore_timeout = 180.0
+
+        # PointCloud detection: old working filters.
+        self.cloud_topic = "/camera/points"
+        self.cloud_period = 0.15
+        self.max_raw_points = 16000
+        self.voxel_size = 0.12
+        # V23 AXIS FIX: monitor membuktikan raw x=forward, raw y=lateral, raw z=up
+        self.min_forward = 0.25
+        self.max_forward = 25.0
+        self.max_abs_left = 12.0
+        self.min_z = 0.05
+        self.max_z = 1.8
+        self.dbscan_eps = 1.25
+        self.dbscan_min_samples = 3
+        self.min_cluster_points = 3
+        self.max_cluster_points = 4500
+        self.max_x_span = 12.0
+        self.max_y_span = 12.0
+        self.min_z_span = 0.05
+        self.max_z_span = 10.0
+
+        # V19 smart clustering / strict visited / detection monitor:
+        # - grid density peak, bukan DBSCAN mentah saja
+        # - non-maximum suppression supaya satu pohon tidak jadi banyak titik
+        # - actual_id gate hanya untuk komparasi/ID marker, bukan target navigasi
+        self.smart_grid_cell = 0.65
+        self.smart_cluster_radius = 1.85
+        self.smart_nms_radius = 4.0
+        self.smart_min_cell_points = 5
+        self.smart_max_candidates = 5
+        self.actual_gate_enabled = True
+
+        # Tracking.
+        self.match_radius = 6.0
+        self.duplicate_radius = 7.0
+        self.actual_association_radius = 3.2
+        self.min_confirmations = 1
+        self.stable_confirmations = 2
+        self.ema_alpha = 0.40
+        self.unconfirmed_timeout = 8.0
+        self.target_select_min = 0.8
+        self.target_select_max = 50.0
+        self.lane_patrol_mode = False
+        self.scan_visit_radius = 0.0
+
+        # ToF front.
+        self.tof_topic = "/tof_front"
+        self.tof_front_min = float("inf")
+        self.tof_stop_distance = 1.45
+        self.tof_visit_distance = 2.0
+        self.tof_visit_max_distance = 3.2
+        # PointCloud front obstacle safety, karena ToF beam sempit
+        self.cloud_stop_distance = 0.8
+        self.cloud_stop_width = 1.0
+        self.cloud_stop_min_z = 0.25
+        self.cloud_stop_max_z = 2.0
+        self.cloud_stop_min_points = 80
+        self.cloud_front_min = float('inf')
+        self.cloud_front_count = 0
+        self.cloud_front_last_time = 0.0
+        self.tof_last_time = 0.0
+        self.last_tof_log = 0.0
+
+        # Runtime.
+        self.state = State.WAIT_DATA
+        self.position = np.array([np.nan, np.nan, np.nan], dtype=float)
+        self.heading = 0.0
+        self.position_valid = False
+        self.home_xy: Optional[np.ndarray] = None
+        self.takeoff_target: Optional[np.ndarray] = None
+        self.prestream_count = 0
+        self.mission_started: Optional[float] = None
+
+        self.tracks: List[TreeTrack] = []
+        self.next_tree_id = 0
+        self.active_target_id: Optional[int] = None
+        self.blocked_target_id: Optional[int] = None
+        self.blocked_target_until = {}
+        self.blocked_target_cooldown = 2.0
+
+        self.explore_waypoint: Optional[np.ndarray] = None
+        self.explore_started = 0.0
+        self.scan_started = 0.0
+        self.backup_started = 0.0
+        self.approach_started = 0.0
+        self.avoid_turn_until = 0.0
+        self.avoid_turn_yaw = 0.0
+
+        self.last_cloud_time = 0.0
+        self.last_cloud_received = 0.0
+        self.last_log_time = 0.0
+        self.last_no_cloud_warn = 0.0
+        self.last_state_debug = 0.0
+        self.last_approach_log = 0.0
+        self.last_explore_log = 0.0
+        self.last_tof_warn_ignore = 0.0
+        self.last_det_monitor_log = 0.0
+        self.det_monitor_items = []
+        self.tof_block_retries = 0
+
+        self.initial_scan_until = 0.0
+        self.initial_scan_done = False
+        self.initial_scan_duration = 0.8
+        self.scan_only_started = 0.0
+        self.last_search_nudge = 0.0
+        self.search_nudge_period = 1.2
+        self.search_nudge_distance = 1.3
+        self.cloud_scan_observations: List[np.ndarray] = []
+        self.cloud_map_built = False
+        self.last_cloud_map_build_log = 0.0
+        self.fusion_radius = 5.0
+        self.min_fused_observations = 1
+        self.max_fused_cloud_waypoints = 16
+
+        self.route: List[np.ndarray] = []
+        self.last_route: Optional[np.ndarray] = None
+
+        sensor_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.VOLATILE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+        )
+        px4_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+        )
+
+        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position_v1", self.position_callback, px4_qos)
+        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.position_callback, px4_qos)
+        self.create_subscription(PointCloud2, self.cloud_topic, self.cloud_callback, sensor_qos)
+        self.create_subscription(LaserScan, self.tof_topic, self.tof_callback, sensor_qos)
+
+        self.offboard_pub = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", 10)
+        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, "/fmu/in/trajectory_setpoint", 10)
+        self.command_pub = self.create_publisher(VehicleCommand, "/fmu/in/vehicle_command", 10)
+        self.tree_pub = self.create_publisher(MarkerArray, "/sawit/tree_markers", 10)
+        self.actual_tree_pub = self.create_publisher(MarkerArray, "/sawit/actual_tree_markers", 10)
+        self.route_pub = self.create_publisher(Marker, "/sawit/route_marker", 10)
+
+        self.static_tf = StaticTransformBroadcaster(self)
+        tf = TransformStamped()
+        tf.header.stamp = self.get_clock().now().to_msg()
+        tf.header.frame_id = "map"
+        tf.child_frame_id = "px4_local"
+        tf.transform.rotation.w = 1.0
+        self.static_tf.sendTransform(tf)
+
+        self.create_timer(0.1, self.control_loop)
+
+        self.get_logger().info("Sawit Navigator AXIS FIX V23 FINAL: CLOUD-CENTER + SPAWN -25 + SAFE TOF")
+        self.get_logger().info("Blue actual trees = direct SDF Gazebo ENU (-12,-4,4,12)")
+        self.get_logger().info("Spawn visual fixed from Gazebo pose/info: x=-25, y=0; actual tetap pembanding")
+        self.get_logger().info("Route/detected trees = PX4 local converted to Gazebo ENU")
+        self.get_logger().info("Anti-collision standoff approach enabled")
+        self.get_logger().info("Precision mode: stricter actual association, no visited on timeout")
+        self.get_logger().info("Logic: cluster PointCloud -> take center -> fly to standoff -> mark visited -> rescan")
+        self.get_logger().info("Green = detected cloud cluster already visited; Yellow = detected not visited")
+        self.get_logger().info("Initial scan = 2 sec, then go to detected cloud center")
+        self.get_logger().info("No fixed patrol route; active PointCloud centers are waypoints")
+        self.get_logger().info("Approach does not spawn new markers; SEARCH may add next tree centers")
+        self.get_logger().info("PointCloud AXIS FIX V23: raw x=forward, raw y=lateral, raw z=up")
+
+    # ================= callbacks =================
+    def position_callback(self, msg: VehicleLocalPosition):
+        p = np.array([msg.x, msg.y, msg.z], dtype=float)
+
+        if not np.all(np.isfinite(p)):
+            return
+        if hasattr(msg, "xy_valid") and not msg.xy_valid:
+            return
+        if hasattr(msg, "z_valid") and not msg.z_valid:
+            return
+
+        self.position = p
+        self.position_valid = True
+
+        if math.isfinite(msg.heading):
+            self.heading = self.normalize(float(msg.heading))
+
+        if self.home_xy is None:
+            self.home_xy = p[:2].copy()
+            self.takeoff_target = np.array([p[0], p[1], self.flight_altitude], dtype=float)
+            self.get_logger().info(f"PX4 ready x={p[0]:.2f}, y={p[1]:.2f}, z={p[2]:.2f}")
+
+        route_point = self.px4_local_to_gazebo_map(p)
+        if self.last_route is None or np.linalg.norm(route_point[:2] - self.last_route[:2]) >= 0.20:
+            self.route.append(route_point)
+            self.last_route = route_point
+            self.route = self.route[-5000:]
+
+    def tof_callback(self, msg: LaserScan):
+        vals = [float(v) for v in msg.ranges if math.isfinite(float(v)) and float(v) > 0.02]
+        self.tof_front_min = min(vals) if vals else float("inf")
+        self.tof_last_time = time.monotonic()
+
+        now = time.monotonic()
+        if now - self.last_tof_log >= 2.0:
+            self.last_tof_log = now
+            if math.isfinite(self.tof_front_min):
+                self.get_logger().info(f"TOF_FRONT min={self.tof_front_min:.2f} m")
+
+    def extract_smart_candidates(self, cloud: np.ndarray) -> List[Tuple[float, float, float, int]]:
+        """
+        V18 smarter clustering:
+        1) voxel/downsample sudah dilakukan sebelum fungsi ini.
+        2) cari peak kepadatan pada grid 2D camera frame (forward-left).
+        3) setiap peak ambil radius lokal, hitung median center.
+        4) NMS radius besar supaya 1 pohon tidak jadi banyak titik/telur katak.
+        """
+        if cloud is None or len(cloud) < self.min_cluster_points:
+            return []
+
+        xy = cloud[:, :2]
+        cell = float(self.smart_grid_cell)
+
+        keys = np.floor(xy / cell).astype(np.int32)
+        uniq, inv, counts = np.unique(keys, axis=0, return_inverse=True, return_counts=True)
+
+        count_map = {}
+        for i, k in enumerate(uniq):
+            count_map[(int(k[0]), int(k[1]))] = int(counts[i])
+
+        # density = isi cell + tetangga 8 arah.
+        density = []
+        for k in uniq:
+            ix, iy = int(k[0]), int(k[1])
+            s = 0
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    s += count_map.get((ix + dx, iy + dy), 0)
+            density.append(s)
+        density = np.asarray(density, dtype=np.int32)
+
+        if len(density) == 0:
+            return []
+
+        # Ambang adaptif: cukup tinggi untuk buang noise, tapi tidak terlalu tinggi.
+        p70 = float(np.percentile(density, 70.0))
+        thr = max(int(self.smart_min_cell_points), int(p70))
+
+        peak_indices = []
+        for i, k in enumerate(uniq):
+            if int(density[i]) < thr:
+                continue
+
+            ix, iy = int(k[0]), int(k[1])
+            is_local_max = True
+            for j, kk in enumerate(uniq):
+                if j == i:
+                    continue
+                jx, jy = int(kk[0]), int(kk[1])
+                if abs(jx - ix) <= 1 and abs(jy - iy) <= 1:
+                    if int(density[j]) > int(density[i]):
+                        is_local_max = False
+                        break
+
+            if is_local_max:
+                peak_indices.append(i)
+
+        # Urutkan peak paling padat dan yang terdekat dulu.
+        peak_indices.sort(
+            key=lambda i: (
+                -int(density[i]),
+                float(math.hypot((float(uniq[i][0]) + 0.5) * cell, (float(uniq[i][1]) + 0.5) * cell)),
+            )
+        )
+
+        raw_candidates: List[Tuple[float, float, float, int]] = []
+
+        for i in peak_indices[: self.smart_max_candidates * 4]:
+            cx = (float(uniq[i][0]) + 0.5) * cell
+            cy = (float(uniq[i][1]) + 0.5) * cell
+
+            d = np.hypot(cloud[:, 0] - cx, cloud[:, 1] - cy)
+            local = cloud[d <= self.smart_cluster_radius]
+            if len(local) < self.min_cluster_points:
+                continue
+
+            span = np.ptp(local, axis=0)
+
+            # Radius lokal sudah kecil, tapi tetap buang cluster yang terlalu datar/aneh.
+            if float(span[0]) > self.max_x_span or float(span[1]) > self.max_y_span:
+                continue
+            if float(span[2]) > self.max_z_span:
+                continue
+
+            center = np.median(local, axis=0)
+            raw_candidates.append((float(center[0]), float(center[1]), float(center[2]), int(len(local))))
+
+        # Non-maximum suppression di local camera frame.
+        final_candidates: List[Tuple[float, float, float, int]] = []
+        for c in sorted(raw_candidates, key=lambda a: (-a[3], math.hypot(a[0], a[1]))):
+            too_close = False
+            for m in final_candidates:
+                if math.hypot(c[0] - m[0], c[1] - m[1]) <= self.smart_nms_radius:
+                    too_close = True
+                    break
+            if too_close:
+                continue
+
+            final_candidates.append(c)
+            if len(final_candidates) >= self.smart_max_candidates:
+                break
+
+        return final_candidates
+
+    def cloud_callback(self, msg: PointCloud2):
+        self.last_cloud_received = time.monotonic()
+
+        if not self.position_valid:
+            return
+        # PointCloud baru valid setelah SEARCH.
+        # Ini mencegah pohon confirm saat WAIT/PRESTREAM/TAKEOFF.
+        if self.state in (State.WAIT_DATA, State.PRESTREAM, State.TAKEOFF):
+            return
+
+        now = time.monotonic()
+        if now - self.last_cloud_time < self.cloud_period:
+            return
+        self.last_cloud_time = now
+
+        points = []
+        front_obstacles = []
+        for raw in point_cloud2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True):
+            # AXIS FIX V23 FINAL:
+            # Monitor kamu menunjukkan:
+            #   xyz_range x=13..46, y=-24..24, z=-1..1
+            # Jadi frame /camera/points yang dipakai sekarang:
+            #   raw x = forward / jarak depan kamera
+            #   raw y = lateral kiri-kanan kamera
+            #   raw z = up / tinggi
+            #
+            # Ini yang bikin SMART_CLOUD tidak 0 lagi.
+            cam_x, cam_y, cam_z = float(raw[0]), float(raw[1]), float(raw[2])
+            if not (math.isfinite(cam_x) and math.isfinite(cam_y) and math.isfinite(cam_z)):
+                continue
+
+            forward = cam_x
+            left = cam_y
+            up = cam_z
+
+            # HARD SAFETY dari PointCloud depan.
+            # ToF kadang tetap 13m karena beam tidak kena batang/daun.
+            if (
+                0.35 <= forward <= self.cloud_stop_distance
+                and abs(left) <= self.cloud_stop_width
+                and self.cloud_stop_min_z <= up <= self.cloud_stop_max_z
+            ):
+                front_obstacles.append(forward)
+
+            if forward < self.min_forward or forward > self.max_forward:
+                continue
+            if abs(left) > self.max_abs_left:
+                continue
+            if up < self.min_z or up > self.max_z:
+                continue
+
+            points.append((forward, left, up))
+            if len(points) >= self.max_raw_points:
+                break
+
+        self.cloud_front_count = len(front_obstacles)
+        self.cloud_front_min = float(min(front_obstacles)) if front_obstacles else float('inf')
+        self.cloud_front_last_time = now
+
+        if len(points) < self.min_cluster_points:
+            self.remove_stale(now)
+            self.log_cloud(0, 0, now)
+            return
+
+        cloud = np.asarray(points, dtype=np.float32)
+
+        voxels = np.floor(cloud / self.voxel_size).astype(np.int32)
+        _, ids = np.unique(voxels, axis=0, return_index=True)
+        cloud = cloud[np.sort(ids)]
+
+        # V18: ganti DBSCAN mentah dengan density-peak clustering + NMS.
+        # Ini lebih tahan terhadap daun/kanopi yang menyambung dan menghindari banyak marker dalam satu pohon.
+        merged = self.extract_smart_candidates(cloud)
+
+        updated = set()
+        self.det_monitor_items = []
+
+        # V19: monitor kandidat cloud -> map -> nearest actual.
+        for forward, left, up, _count in merged:
+            obs_dbg = self.local_to_ned(forward, left, up)
+            actual_id_dbg, err_dbg, det_map_dbg, _act_dbg = self.nearest_actual_info_from_obs(obs_dbg)
+            if actual_id_dbg is None or err_dbg > self.actual_association_radius:
+                actual_id_dbg = None
+            self.det_monitor_items.append(
+                (
+                    actual_id_dbg,
+                    float(err_dbg),
+                    float(det_map_dbg[0]),
+                    float(det_map_dbg[1]),
+                    float(obs_dbg[0]),
+                    float(obs_dbg[1]),
+                )
+            )
+
+        # RAFIF FIX:
+        # SEARCH dan APPROACH sama-sama boleh update/create tree tracks.
+        # Saat APPROACH, target aktif tetap di-refine, tapi pohon lain yang terlihat juga disimpan.
+        if self.state == State.APPROACH and self.active_target_id is not None:
+            for forward, left, up, _count in merged:
+                obs = self.local_to_ned(forward, left, up)
+                actual_id = self.nearest_actual_id_from_obs(obs)
+
+                if actual_id == self.active_target_id:
+                    track = self.get_track(self.active_target_id)
+                    if track is not None and not track.visited:
+                        a = 0.35
+                        track.x = (1.0 - a) * track.x + a * float(obs[0])
+                        track.y = (1.0 - a) * track.y + a * float(obs[1])
+                        track.z = (1.0 - a) * track.z + a * float(obs[2])
+                        track.last_seen = now
+                        updated.add(track.tree_id)
+
+        if self.state in (State.SEARCH, State.APPROACH):
+            for forward, left, up, _count in merged:
+                obs = self.local_to_ned(forward, left, up)
+                if not self.point_in_corridor(obs[0], obs[1]):
+                    continue
+
+                self.update_track(obs, now, updated)
+
+            self.remove_stale(now)
+        self.log_detection_monitor(now)
+        self.log_cloud(len(cloud), len(merged), now)
+
+    # ================= detection / tracking =================
+    def build_fused_cloud_map(self, reason: str):
+        # V15: satu pohon = satu waypoint dari hasil fusi seluruh kandidat scan.
+        # Ini bukan actual snap. Actual tetap hanya marker pembanding.
+        if len(self.cloud_scan_observations) <= 0:
+            now = time.monotonic()
+            if now - self.last_cloud_map_build_log >= 2.0:
+                self.last_cloud_map_build_log = now
+                self.get_logger().warn(f"CLOUD_MAP_BUILD_EMPTY reason={reason}")
+            return False
+
+        obs = np.asarray(self.cloud_scan_observations, dtype=float)
+
+        if len(obs) == 1:
+            labels = np.array([0], dtype=int)
+        else:
+            labels = DBSCAN(
+                eps=self.fusion_radius,
+                min_samples=self.min_fused_observations,
+                n_jobs=1,
+            ).fit_predict(obs[:, :2])
+
+        fused = []
+        for label in sorted(set(labels.tolist())):
+            if label == -1:
+                continue
+
+            cluster = obs[labels == label]
+            if len(cluster) < self.min_fused_observations:
+                continue
+
+            center = np.median(cluster, axis=0)
+            fused.append((float(center[0]), float(center[1]), float(center[2]), int(len(cluster))))
+
+        # Urut dari dekat drone, batasi maksimum supaya tidak jadi telur katak.
+        fused.sort(key=lambda item: math.hypot(item[0] - self.position[0], item[1] - self.position[1]))
+        fused = fused[:self.max_fused_cloud_waypoints]
+
+        if len(fused) <= 0:
+            self.get_logger().warn(f"CLOUD_MAP_BUILD_NO_VALID_CLUSTER reason={reason}")
+            return False
+
+        self.tracks.clear()
+        self.next_tree_id = 0
+
+        for x, y, z, count in fused:
+            tree_id = self.next_tree_id
+            self.next_tree_id += 1
+            self.tracks.append(
+                TreeTrack(
+                    tree_id=tree_id,
+                    x=float(x),
+                    y=float(y),
+                    z=float(z),
+                    confirmations=int(count),
+                    confirmed=True,
+                    visited=False,
+                    last_seen=time.monotonic(),
+                )
+            )
+            self.get_logger().info(
+                f"CLOUD_MAP_WAYPOINT id={tree_id} x={x:.2f}, y={y:.2f}, obs={count}"
+            )
+
+        self.cloud_map_built = True
+        self.get_logger().info(
+            f"CLOUD_MAP_BUILT reason={reason} raw_obs={len(self.cloud_scan_observations)} fused={len(self.tracks)}"
+        )
+        return True
+
+    def log_cloud(self, points_count: int, candidates_count: int, now: float):
+        if now - self.last_log_time >= 1.0:
+            self.last_log_time = now
+            self.get_logger().info(
+                f"SMART_CLOUD points={points_count}, smart_candidates={candidates_count}, "
+                f"confirmed={len(self.confirmed_tracks())}, "
+                f"visited={self.count_visited()}/{self.max_visited}"
+            )
+
+    def local_to_ned(self, forward: float, left: float, up: float) -> np.ndarray:
+        """
+        SIM FIX:
+        Kamera depth cloud:
+            forward = depan kamera
+            left    = kiri kamera
+            up      = atas kamera
+
+        Untuk world kebun_sawit sekarang:
+            Gazebo yaw=0, drone spawn -25,0
+            forward kamera -> Gazebo East -> PX4 local y
+            left kamera    -> Gazebo North -> PX4 local x
+
+        Jadi jangan pakai heading dulu, karena DET_MONITOR sebelumnya
+        map cloud meleset jauh dan actual_gate menolak semua kandidat.
+        """
+        north = self.position[0] + left
+        east = self.position[1] + forward
+        down = self.position[2] - up
+        return np.array([north, east, down], dtype=float)
+
+    def point_in_corridor(self, x: float, y: float) -> bool:
+        if self.home_xy is None:
+            return True
+        hx, hy = float(self.home_xy[0]), float(self.home_xy[1])
+        rel_x = float(x) - hx
+        rel_y = float(y) - hy
+        return (
+            abs(rel_x) <= self.corridor_x_limit
+            and self.corridor_y_min <= rel_y <= self.corridor_y_max
+        )
+
+    def track_in_corridor(self, track: TreeTrack) -> bool:
+        return self.point_in_corridor(track.x, track.y)
+
+    def px4_local_relative_enu(self, p: np.ndarray):
+        # PX4 local NED -> relative Gazebo ENU tanpa spawn offset.
+        if self.home_xy is not None:
+            rel_north = float(p[0]) - float(self.home_xy[0])
+            rel_east = float(p[1]) - float(self.home_xy[1])
+        else:
+            rel_north = float(p[0])
+            rel_east = float(p[1])
+        return rel_east, rel_north, -float(p[2])
+
+    def nearest_actual_info_from_obs(self, obs: np.ndarray):
+        det_xyz = self.px4_local_to_gazebo_map(obs)
+        actual_positions = get_actual_tree_positions_gazebo(0.0)
+
+        best_i = None
+        best_d = float("inf")
+        best_actual = None
+
+        for i, (ax, ay, az) in enumerate(actual_positions):
+            d = math.hypot(float(det_xyz[0]) - float(ax), float(det_xyz[1]) - float(ay))
+            if d < best_d:
+                best_d = d
+                best_i = i
+                best_actual = (float(ax), float(ay), float(az))
+
+        return best_i, best_d, det_xyz, best_actual
+
+    def nearest_actual_id_from_obs(self, obs: np.ndarray):
+        best_i, best_d, _det_xyz, _best_actual = self.nearest_actual_info_from_obs(obs)
+
+        if best_i is None or best_d > self.actual_association_radius:
+            return None
+
+        return int(best_i)
+
+    def update_visual_alignment(self):
+        if not self.auto_visual_alignment or self.home_xy is None:
+            return
+
+        actual_positions = get_actual_tree_positions_gazebo(0.0)
+        xs = []
+        ys = []
+
+        for track in self.confirmed_tracks():
+            if track.tree_id < 0 or track.tree_id >= len(actual_positions):
+                continue
+
+            ax, ay, _az = actual_positions[track.tree_id]
+            rel_east, rel_north, _up = self.px4_local_relative_enu(
+                np.array([track.x, track.y, track.z], dtype=float)
+            )
+
+            xs.append(float(ax) - float(rel_east))
+            ys.append(float(ay) - float(rel_north))
+
+        if len(xs) < self.visual_alignment_min_tracks:
+            return
+
+        new_x = float(np.median(np.asarray(xs, dtype=float)))
+        new_y = float(np.median(np.asarray(ys, dtype=float)))
+
+        if not self.visual_alignment_ready:
+            self.auto_spawn_x_east = new_x
+            self.auto_spawn_y_north = new_y
+            self.visual_alignment_ready = True
+        else:
+            # Smooth supaya marker tidak lompat besar.
+            self.auto_spawn_x_east = 0.85 * self.auto_spawn_x_east + 0.15 * new_x
+            self.auto_spawn_y_north = 0.85 * self.auto_spawn_y_north + 0.15 * new_y
+
+        now = time.monotonic()
+        if now - self.last_visual_align_log >= 2.0:
+            self.last_visual_align_log = now
+            self.get_logger().info(
+                f"VISUAL_AUTO_ALIGN tracks={len(xs)} spawn=({self.auto_spawn_x_east:.2f},{self.auto_spawn_y_north:.2f})"
+            )
+
+    def log_detection_monitor(self, now: float):
+        if now - self.last_det_monitor_log < 1.5:
+            return
+        self.last_det_monitor_log = now
+
+        if not self.det_monitor_items:
+            return
+
+        parts = []
+        for item in self.det_monitor_items[:4]:
+            actual_id, err, mx, my, nx, ny = item
+            if actual_id is None:
+                parts.append(f"id=None err=inf map=({mx:.1f},{my:.1f}) localNE=({nx:.1f},{ny:.1f})")
+            else:
+                parts.append(f"id={actual_id} err={err:.1f} map=({mx:.1f},{my:.1f}) localNE=({nx:.1f},{ny:.1f})")
+
+        self.get_logger().info("DET_MONITOR " + " | ".join(parts))
+
+    def update_track(self, obs: np.ndarray, now: float, updated: set):
+        # V18:
+        # Actual SDF tetap pembanding, bukan waypoint.
+        # Tapi actual_id dipakai sebagai ID/gate marker supaya 1 pohon actual tidak jadi 3-5 marker.
+        # Posisi waypoint tetap dari median cloud center, tidak di-snap ke actual.
+        if not self.point_in_corridor(obs[0], obs[1]):
+            return
+
+        actual_id = self.nearest_actual_id_from_obs(obs)
+        if self.actual_gate_enabled and actual_id is None:
+            # Noise cloud yang tidak dekat actual SDF tidak dijadikan marker.
+            return
+
+        tree_id = int(actual_id) if actual_id is not None else int(self.next_tree_id)
+
+        if tree_id in updated:
+            return
+
+        existing = self.get_track(tree_id)
+
+        if existing is not None:
+            # Setelah visited, jangan geser lagi.
+            if existing.visited:
+                updated.add(tree_id)
+                return
+
+            # Sebelum stabil, pakai EMA. Setelah stabil, beku agar marker tidak goyang.
+            if existing.confirmations < self.stable_confirmations:
+                a = self.ema_alpha
+                existing.x = (1.0 - a) * existing.x + a * float(obs[0])
+                existing.y = (1.0 - a) * existing.y + a * float(obs[1])
+                existing.z = (1.0 - a) * existing.z + a * float(obs[2])
+
+            existing.confirmations += 1
+            existing.last_seen = now
+            updated.add(tree_id)
+
+            if not existing.confirmed and existing.confirmations >= self.min_confirmations:
+                existing.confirmed = True
+                actual_id_log, err_log, det_map_log, _act_log = self.nearest_actual_info_from_obs(np.array([existing.x, existing.y, existing.z], dtype=float))
+                self.get_logger().info(
+                    f"TREE_CONFIRMED actual_id={existing.tree_id} cloud_x={existing.x:.2f}, cloud_y={existing.y:.2f} err={err_log:.2f} map=({det_map_log[0]:.2f},{det_map_log[1]:.2f})"
+                )
+            return
+
+        if actual_id is None:
+            self.next_tree_id += 1
+
+        confirmed_now = self.min_confirmations <= 1
+
+        self.tracks.append(
+            TreeTrack(
+                tree_id=tree_id,
+                x=float(obs[0]),
+                y=float(obs[1]),
+                z=float(obs[2]),
+                confirmations=1,
+                confirmed=confirmed_now,
+                visited=False,
+                last_seen=now,
+            )
+        )
+        updated.add(tree_id)
+
+        if confirmed_now:
+            actual_id_log, err_log, det_map_log, _act_log = self.nearest_actual_info_from_obs(obs)
+            self.get_logger().info(
+                f"TREE_CONFIRMED actual_id={tree_id} cloud_x={obs[0]:.2f}, cloud_y={obs[1]:.2f} err={err_log:.2f} map=({det_map_log[0]:.2f},{det_map_log[1]:.2f})"
+            )
+
+    def remove_stale(self, now: float):
+        self.tracks = [
+            t for t in self.tracks
+            if t.confirmed or now - t.last_seen <= self.unconfirmed_timeout
+        ]
+
+    def confirmed_tracks(self):
+        return [t for t in self.tracks if t.confirmed]
+
+    def count_visited(self):
+        return sum(1 for t in self.tracks if t.visited)
+
+    def get_track(self, tree_id: Optional[int]) -> Optional[TreeTrack]:
+        if tree_id is None:
+            return None
+        for track in self.tracks:
+            if track.tree_id == tree_id:
+                return track
+        return None
+
+    def select_target(self) -> bool:
+        # V14: pilih waypoint dari cloud cluster yang sudah confirmed.
+        if not self.position_valid:
+            return False
+
+        now = time.monotonic()
+        candidates = []
+
+        for track in self.confirmed_tracks():
+            if track.visited:
+                continue
+            if False and self.blocked_target_until.get(track.tree_id, 0.0) > time.monotonic():
+                continue
+            if not self.track_in_corridor(track):
+                continue
+
+            d = math.hypot(track.x - self.position[0], track.y - self.position[1])
+            if d < self.target_select_min or d > self.target_select_max:
+                continue
+
+            candidates.append((d, track))
+
+        if not candidates:
+            return False
+
+        candidates.sort(key=lambda item: item[0])
+        dist, track = candidates[0]
+        self.active_target_id = track.tree_id
+        self.get_logger().info(
+            f"SMART_CENTER_SELECTED actual_id={track.tree_id} dist={dist:.2f} cloud_x={track.x:.2f}, cloud_y={track.y:.2f}"
+        )
+        return True
+
+    def mark_nearby_confirmed_tracks(self):
+        if not self.position_valid:
+            return
+
+        for track in self.confirmed_tracks():
+            if track.visited:
+                continue
+            if not self.track_in_corridor(track):
+                continue
+
+            d = math.hypot(track.x - self.position[0], track.y - self.position[1])
+
+            # Safe visit: cukup lewat dekat pohon dari jalur antarbaris, tidak menabrak batang.
+            if d <= self.scan_visit_radius:
+                track.visited = True
+                self.get_logger().info(
+                    f"TREE_VISITED_SCAN id={track.tree_id} dist={d:.2f}: "
+                    f"{self.count_visited()}/{self.max_visited}"
+                )
+
+    # ================= exploration =================
+    def handle_initial_rotate_scan(self):
+        # Untuk debug transform: jangan rotate dulu.
+        # Hold posisi dan yaw supaya cloud center stabil lalu bisa confirmed.
+        self.hold(self.heading)
+
+        if time.monotonic() >= self.initial_scan_until:
+            self.initial_scan_done = True
+            self.get_logger().info(
+                f"INITIAL_HOLD_SCAN done; cloud_waypoints={len(self.confirmed_tracks())}"
+            )
+
+
+    def choose_explore_waypoint(self):
+        if self.home_xy is None:
+            return
+
+        if len(self.search_waypoints_rel) <= 0:
+            return
+
+        if self.search_wp_index >= len(self.search_waypoints_rel):
+            self.search_wp_index = 0
+
+        hx, hy = float(self.home_xy[0]), float(self.home_xy[1])
+        rel_x, rel_y = self.search_waypoints_rel[self.search_wp_index]
+        wp = np.array([hx + rel_x, hy + rel_y, self.flight_altitude], dtype=float)
+
+        self.explore_waypoint = wp
+        self.explore_started = time.monotonic()
+        self.get_logger().info(
+            f"EXPLORE_WAYPOINT idx={self.search_wp_index} waypoint=({wp[0]:.2f},{wp[1]:.2f})"
+        )
+
+    def advance_waypoint(self, reason: str):
+        old_idx = int(self.search_wp_index)
+
+        if len(self.search_waypoints_rel) <= 0:
+            self.search_wp_index = 0
+        else:
+            self.search_wp_index = (self.search_wp_index + 1) % len(self.search_waypoints_rel)
+
+        self.explore_waypoint = None
+        self.explore_started = 0.0
+
+        self.get_logger().info(
+            f"WAYPOINT_ADVANCE reason={reason} {old_idx}->{self.search_wp_index}"
+        )
+
+    def handle_exploration(self):
+        # V16: no fixed lane, no frozen map.
+        # Scan current PointCloud. If no unvisited tree is confirmed, rotate.
+        # If it keeps seeing nothing, make a tiny forward nudge so it does not stand forever.
+        now = time.monotonic()
+
+        if self.last_cloud_received <= 0.0 or now - self.last_cloud_received > 3.0:
+            if now - self.last_no_cloud_warn > 3.0:
+                self.last_no_cloud_warn = now
+                self.get_logger().warn("NO_POINTCLOUD_DATA: cek bridge /camera/points")
+            self.hold(self.normalize(self.heading + math.radians(8.0)))
+            return
+
+        yaw = self.normalize(self.heading + math.radians(8.0))
+
+        unvisited = [t for t in self.confirmed_tracks() if not t.visited]
+        if len(unvisited) == 0:
+            if self.front_blocked():
+                self.publish_setpoint(self.body_step(-0.35), self.normalize(self.heading + math.radians(35.0)))
+                if now - self.last_explore_log >= 1.0:
+                    self.last_explore_log = now
+                    self.get_logger().warn(f"CLOUD_SEARCH_TOF_BACKUP {self.tof_front_min:.2f} m")
+                return
+
+            # Jangan maju buta kalau belum ada cloud center.
+            # Ini mencegah nabrak awal. Drone hanya rotate-scan sampai center valid muncul.
+            scan_yaw = self.normalize(self.heading + math.radians(8.0))
+            self.hold(scan_yaw)
+            if now - self.last_explore_log >= 1.0:
+                self.last_explore_log = now
+                self.get_logger().warn("CLOUD_SEARCH_ROTATE_WAIT_CENTER: belum ada cloud center valid, ROTATE_SCAN")
+            return
+
+        # Ada confirmed tree yang belum visited, tapi belum kepilih target.
+        # Jangan diam: rotate pelan agar kamera dapat sudut baru dan selector bisa pilih target berikutnya.
+        scan_yaw = self.normalize(self.heading + math.radians(8.0))
+        self.hold(scan_yaw)
+
+        if now - self.last_explore_log >= 1.0:
+            self.last_explore_log = now
+            self.get_logger().info(
+                f"CLOUD_SEARCH_ROTATE confirmed={len(self.confirmed_tracks())} visited={self.count_visited()}/{self.max_visited} unvisited={len(unvisited)}"
+            )
+
+    # ================= PX4 helpers =================
+    def timestamp(self):
+        return int(self.get_clock().now().nanoseconds / 1000)
+
+    def heartbeat(self):
+        msg = OffboardControlMode()
+        msg.timestamp = self.timestamp()
+        msg.position = True
+        msg.velocity = False
+        msg.acceleration = False
+        msg.attitude = False
+        msg.body_rate = False
+        self.offboard_pub.publish(msg)
+
+    def publish_setpoint(self, requested: np.ndarray, yaw: float):
+        if not self.position_valid:
+            return
+
+        target = np.asarray(requested, dtype=float).copy()
+        if target.shape != (3,) or not np.all(np.isfinite(target)):
+            self.get_logger().error("Invalid setpoint rejected")
+            return
+
+        if self.home_xy is not None:
+            hx, hy = float(self.home_xy[0]), float(self.home_xy[1])
+            target[0] = min(max(float(target[0]), hx - self.corridor_x_limit), hx + self.corridor_x_limit)
+            target[1] = min(max(float(target[1]), hy + self.corridor_y_min), hy + self.corridor_y_max)
+
+        delta = target[:2] - self.position[:2]
+        d = float(np.linalg.norm(delta))
+
+        if d > self.max_step:
+            target[:2] = self.position[:2] + delta / d * self.max_step
+
+        target[2] = self.flight_altitude
+
+        msg = TrajectorySetpoint()
+        msg.timestamp = self.timestamp()
+        msg.position = [float(target[0]), float(target[1]), float(target[2])]
+        msg.velocity = [math.nan, math.nan, math.nan]
+        msg.acceleration = [math.nan, math.nan, math.nan]
+        msg.jerk = [math.nan, math.nan, math.nan]
+        msg.yaw = float(self.normalize(yaw))
+        msg.yawspeed = math.nan
+        self.setpoint_pub.publish(msg)
+
+    def command(self, command: int, param1=0.0, param2=0.0):
+        msg = VehicleCommand()
+        msg.timestamp = self.timestamp()
+        msg.param1 = float(param1)
+        msg.param2 = float(param2)
+        msg.command = int(command)
+        msg.target_system = 1
+        msg.target_component = 1
+        msg.source_system = 1
+        msg.source_component = 1
+        msg.from_external = True
+        self.command_pub.publish(msg)
+
+    def hold(self, yaw: Optional[float] = None):
+        self.publish_setpoint(
+            np.array([self.position[0], self.position[1], self.flight_altitude], dtype=float),
+            self.heading if yaw is None else yaw,
+        )
+
+    def body_step(self, distance: float):
+        return np.array([
+            self.position[0] + distance * math.cos(self.heading),
+            self.position[1] + distance * math.sin(self.heading),
+            self.flight_altitude,
+        ], dtype=float)
+
+    def front_blocked(self) -> bool:
+        now = time.monotonic()
+
+        tof_blocked = (
+            now - self.tof_last_time <= 1.0
+            and math.isfinite(self.tof_front_min)
+            and self.tof_front_min <= self.tof_stop_distance
+        )
+
+        cloud_blocked = (
+            now - self.cloud_front_last_time <= 1.0
+            and math.isfinite(self.cloud_front_min)
+            and self.cloud_front_min <= self.cloud_stop_distance
+            and self.cloud_front_count >= self.cloud_stop_min_points
+        )
+
+        return tof_blocked or cloud_blocked
+
+
+    def safe_standoff_point(self, track: TreeTrack, yaw: float):
+        safe_x = track.x - self.approach_standoff * math.cos(yaw)
+        safe_y = track.y - self.approach_standoff * math.sin(yaw)
+        return np.array([safe_x, safe_y, self.flight_altitude], dtype=float)
+
+    # ================= main control =================
+    def debug_state(self):
+        now = time.monotonic()
+        if now - self.last_state_debug >= 3.0:
+            self.last_state_debug = now
+            self.get_logger().info(
+                f"STATE_DEBUG state={self.state.name} "
+                f"confirmed={len(self.confirmed_tracks())} "
+                f"visited={self.count_visited()}/{self.max_visited} "
+                f"active={self.active_target_id} wp={self.search_wp_index} align={self.visual_alignment_ready}"
+            )
+
+    def control_loop(self):
+        self.heartbeat()
+        self.update_visual_alignment()
+        self.publish_markers()
+        self.publish_actual_tree_markers()
+        self.publish_route()
+        self.debug_state()
+
+        if self.state == State.WAIT_DATA:
+            if self.position_valid and self.takeoff_target is not None:
+                self.state = State.PRESTREAM
+                self.get_logger().info("STATE -> PRESTREAM")
+            return
+
+        if self.state == State.PRESTREAM:
+            self.publish_setpoint(self.takeoff_target, self.heading)
+            self.prestream_count += 1
+
+            if self.prestream_count == 20:
+                self.command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1.0, 6.0)
+                self.command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0)
+                self.get_logger().info("OFFBOARD + ARM sent")
+
+            if self.prestream_count >= 35:
+                self.state = State.TAKEOFF
+            return
+
+        if self.state == State.TAKEOFF:
+            self.publish_setpoint(self.takeoff_target, self.heading)
+
+            if abs(self.position[2] - self.flight_altitude) <= 0.20:
+                self.tracks.clear()
+                self.next_tree_id = 0
+                self.active_target_id = None
+                self.mission_started = time.monotonic()
+                self.initial_scan_until = time.monotonic() + self.initial_scan_duration
+                self.initial_scan_done = False
+                self.state = State.SEARCH
+                self.get_logger().info("TAKEOFF complete; STATE -> SEARCH")
+                self.get_logger().info("INITIAL_ROTATE_SCAN started")
+            return
+
+        # DEBUG FIX:
+        # Jangan finish karena mission_timeout.
+        # Misi hanya selesai kalau count_visited() >= max_visited.
+        # if self.mission_started is not None and time.monotonic() - self.mission_started >= self.mission_timeout:
+        #     self.state = State.FINISHED
+
+        # HARD SAFETY: ToF atau PointCloud depan harus menang saat SEARCH/APPROACH.
+        # Kalau ToF tidak kena batang tapi cloud depan melihat obstacle, drone mundur/putar.
+        # RAFIF FINAL:
+        # ToF 2m hanya boleh menandai visited kalau target map juga sudah dekat.
+        # Kalau target masih jauh, ToF itu kemungkinan kena pohon/objek lain.
+        if (
+            self.state == State.APPROACH
+            and self.active_target_id is not None
+            and time.monotonic() - self.tof_last_time <= 1.0
+            and math.isfinite(self.tof_front_min)
+            and self.tof_front_min <= self.tof_visit_distance
+        ):
+            active_track = self.get_track(self.active_target_id)
+            if active_track is not None:
+                target_dist = math.hypot(
+                    active_track.x - self.position[0],
+                    active_track.y - self.position[1]
+                )
+            else:
+                target_dist = float('inf')
+
+            if target_dist <= self.tof_visit_max_distance:
+                visited_id = self.active_target_id
+                marked = False
+
+                for t in self.confirmed_tracks():
+                    if t.tree_id == visited_id:
+                        t.visited = True
+                        marked = True
+                        break
+
+                self.get_logger().warn(
+                    f"TREE_VISITED_BY_TOF actual_id={visited_id} "
+                    f"tof={self.tof_front_min:.2f} dist={target_dist:.2f} "
+                    f"marked={marked} "
+                    f"visited={self.count_visited()}/{self.max_visited}"
+                )
+
+                self.active_target_id = None
+                self.approach_started = None
+                self.state = State.SEARCH
+                return
+            else:
+                self.get_logger().warn(
+                    f"TOF_NEAR_BUT_TARGET_FAR tof={self.tof_front_min:.2f} "
+                    f"target_dist={target_dist:.2f}; NOT_VISITED"
+                )
+
+        if self.state == State.APPROACH and self.front_blocked():
+            backup = self.body_step(-0.35)
+            yaw = self.normalize(self.heading + math.radians(15.0))
+            self.publish_setpoint(backup, yaw)
+
+            # OBSTACLE SAFETY:
+            # Obstacle saat APPROACH bukan berarti visited.
+            # Mundur, cooldown target sebentar, lalu pilih target lain.
+            if self.state == State.APPROACH:
+                blocked_id = self.active_target_id
+                self.get_logger().warn(
+                    f"OBSTACLE_ABORT_APPROACH active={blocked_id} "
+                    f"tof={self.tof_front_min:.2f} cloud={self.cloud_front_min:.2f}"
+                )
+
+                if blocked_id is not None:
+                    self.blocked_target_until[blocked_id] = time.monotonic() + self.blocked_target_cooldown
+
+                self.active_target_id = None
+                self.approach_started = None
+                self.state = State.BACKUP
+
+            if time.monotonic() - self.last_explore_log >= 0.8:
+                self.last_explore_log = time.monotonic()
+                self.get_logger().warn(
+                    f"HARD_OBSTACLE_BACKUP tof={self.tof_front_min:.2f} "
+                    f"cloud={self.cloud_front_min:.2f} "
+                    f"count={self.cloud_front_count} "
+                    f"state={self.state.name}"
+                )
+            return
+
+        if self.state == State.SEARCH:
+            self.mark_nearby_confirmed_tracks()
+
+            if self.count_visited() >= self.max_visited:
+                self.state = State.FINISHED
+                return
+
+            if not self.initial_scan_done:
+                self.handle_initial_rotate_scan()
+                return
+
+            # RAFIF LOGIC:
+            # Kalau sudah ada pohon confirmed yang belum visited, jangan rotate.
+            # Langsung pilih/force target lalu APPROACH.
+            unvisited_now = [t for t in self.confirmed_tracks() if not t.visited]
+            if self.state == State.SEARCH and len(unvisited_now) > 0:
+                if self.select_target():
+                    self.approach_started = time.monotonic()
+                    self.state = State.APPROACH
+                    return
+
+                # Kalau select_target gagal karena gate/cooldown, tetap paksa target terdekat.
+                unvisited_now.sort(
+                    key=lambda t: math.hypot(t.x - self.position[0], t.y - self.position[1])
+                )
+                forced = unvisited_now[0]
+                self.active_target_id = forced.tree_id
+                self.approach_started = time.monotonic()
+                self.state = State.APPROACH
+                self.get_logger().warn(
+                    f"FORCE_TARGET_NO_ROTATE actual_id={forced.tree_id} "
+                    f"dist={math.hypot(forced.x - self.position[0], forced.y - self.position[1]):.2f}"
+                )
+                return
+
+            if self.select_target():
+                self.approach_started = time.monotonic()
+                self.state = State.APPROACH
+                return
+
+            self.handle_exploration()
+            return
+
+        if self.state == State.APPROACH:
+            track = self.get_track(self.active_target_id)
+
+            if track is None or track.visited or not self.track_in_corridor(track):
+                self.active_target_id = None
+                self.approach_started = 0.0
+                self.state = State.SEARCH
+                return
+
+            dx = track.x - self.position[0]
+            dy = track.y - self.position[1]
+            distance = math.hypot(dx, dy)
+
+            if self.approach_started <= 0.0:
+                self.approach_started = time.monotonic()
+
+            # V19: timeout TIDAK boleh langsung jadi visited.
+            # Hijau/visited hanya kalau benar-benar dekat cloud center atau ToF dekat + jarak target dekat.
+            if time.monotonic() - self.approach_started > self.approach_timeout:
+                self.get_logger().warn(
+                    f"CLOUD_APPROACH_TIMEOUT id={track.tree_id}; NOT_VISITED block temporary, scan again dist={distance:.2f}"
+                )
+                self.blocked_target_id = track.tree_id
+                if self.active_target_id is not None:
+                    self.blocked_target_until[self.active_target_id] = time.monotonic() + self.blocked_target_cooldown
+                self.active_target_id = None
+                self.approach_started = 0.0
+                self.backup_started = time.monotonic()
+                self.avoid_turn_yaw = self.normalize(self.heading + math.radians(45.0))
+                self.avoid_turn_until = time.monotonic() + self.backup_time + 0.3
+                self.state = State.BACKUP
+                return
+
+            # Target dianggap tercapai kalau sudah cukup dekat ke pusat cluster,
+            # atau ToF sudah melihat objek target di depan pada jarak aman.
+            tof_close_to_tree = (
+                math.isfinite(self.tof_front_min)
+                and self.tof_front_min <= self.tof_visit_distance
+                and distance <= self.tof_visit_max_distance
+            )
+
+            if tof_close_to_tree or distance <= self.visit_distance:
+                self.scan_started = time.monotonic()
+                self.state = State.HOLD_SCAN
+
+                if tof_close_to_tree:
+                    self.get_logger().info(
+                        f"SMART_TARGET_REACHED actual_id={track.tree_id} by ToF {self.tof_front_min:.2f} m, dist={distance:.2f}"
+                    )
+                else:
+                    self.get_logger().info(f"SMART_TARGET_REACHED actual_id={track.tree_id} by position dist={distance:.2f}")
+                return
+
+            # Kalau ToF sudah dekat, itu berarti batang/daun ada di depan.
+            # Konfirmasi visit kalau target memang sudah dekat; kalau masih jauh, backup.
+            if self.front_blocked():
+                if distance <= self.tof_visit_max_distance:
+                    self.scan_started = time.monotonic()
+                    self.state = State.HOLD_SCAN
+                    self.get_logger().info(
+                        f"SMART_TARGET_REACHED actual_id={track.tree_id} by ToF-safe {self.tof_front_min:.2f} m, dist={distance:.2f}"
+                    )
+                    return
+
+                self.get_logger().warn(
+                    f"TOF_BLOCK_BEFORE_REACH {self.tof_front_min:.2f} m; backup and rescan"
+                )
+                self.blocked_target_id = self.active_target_id
+                if self.active_target_id is not None:
+                    self.blocked_target_until[self.active_target_id] = time.monotonic() + self.blocked_target_cooldown
+                self.active_target_id = None
+                self.approach_started = 0.0
+                self.backup_started = time.monotonic()
+                self.avoid_turn_yaw = self.normalize(self.heading + math.radians(55.0))
+                self.avoid_turn_until = time.monotonic() + self.backup_time + 0.3
+                self.state = State.BACKUP
+                return
+
+            target_yaw = math.atan2(dy, dx)
+            yaw_error = self.normalize(target_yaw - self.heading)
+            correction = max(-self.max_yaw_step, min(self.max_yaw_step, yaw_error))
+            cmd_yaw = self.normalize(self.heading + correction)
+
+            safe_point = self.safe_standoff_point(track, target_yaw)
+            self.publish_setpoint(safe_point, cmd_yaw)
+
+            now = time.monotonic()
+            if now - self.last_approach_log >= 1.0:
+                self.last_approach_log = now
+                self.get_logger().info(
+                    f"CLOUD_APPROACH_MOVE id={track.tree_id} dist={distance:.2f} tof={self.tof_front_min:.2f}"
+                )
+            return
+
+        if self.state == State.HOLD_SCAN:
+            self.hold()
+
+            if time.monotonic() - self.scan_started >= self.scan_hold:
+                track = self.get_track(self.active_target_id)
+
+                if track is not None:
+                    track.visited = True
+                    self.get_logger().info(
+                        f"TREE_VISITED actual_id={track.tree_id}: {self.count_visited()}/{self.max_visited}"
+                    )
+
+                self.active_target_id = None
+                self.approach_started = 0.0
+                self.backup_started = time.monotonic()
+                self.state = State.BACKUP
+            return
+
+        if self.state == State.BACKUP:
+            now = time.monotonic()
+
+            if now - self.backup_started < self.backup_time:
+                self.publish_setpoint(self.body_step(-self.backward_step), self.heading)
+            else:
+                self.active_target_id = None
+                self.explore_waypoint = None
+                self.state = State.SEARCH
+            return
+
+        if self.state == State.FINISHED and not self.land_sent:
+            self.land_sent = True
+            self.command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+            self.get_logger().info("MISSION FINISHED; LAND sent")
+
+    # ================= visualization =================
+    def px4_local_to_gazebo_map(self, p: np.ndarray):
+        # PX4 local NED -> Gazebo/SDF ENU visual transform.
+        # V19: kalau sudah cukup pasangan detected<->actual, offset visual dikalibrasi otomatis.
+        rel_east, rel_north, up = self.px4_local_relative_enu(p)
+
+        if self.auto_visual_alignment and self.visual_alignment_ready:
+            sx = self.auto_spawn_x_east
+            sy = self.auto_spawn_y_north
+        else:
+            sx = self.spawn_x_east
+            sy = self.spawn_y_north
+
+        map_x = sx + rel_east
+        map_y = sy + rel_north
+        map_z = up
+        return np.array([map_x, map_y, map_z], dtype=float)
+
+    def publish_markers(self):
+        arr = MarkerArray()
+        now = self.get_clock().now().to_msg()
+
+        for track in self.confirmed_tracks():
+            xyz = self.px4_local_to_gazebo_map(np.array([track.x, track.y, track.z], dtype=float))
+
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = now
+            marker.ns = "trees_detected"
+            marker.id = int(track.tree_id)
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.pose.position.x = float(xyz[0])
+            marker.pose.position.y = float(xyz[1])
+            marker.pose.position.z = float(max(0.25, xyz[2]))
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 0.85
+            marker.scale.y = 0.85
+            marker.scale.z = 0.85
+
+            if track.visited:
+                marker.color.g = 1.0
+            else:
+                marker.color.r = 1.0
+                marker.color.g = 1.0
+            marker.color.a = 1.0
+            arr.markers.append(marker)
+
+        active = self.get_track(self.active_target_id)
+        if active is not None:
+            xyz = self.px4_local_to_gazebo_map(np.array([active.x, active.y, active.z], dtype=float))
+
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = now
+            marker.ns = "active_target"
+            marker.id = 50000
+            marker.type = Marker.CUBE
+            marker.action = Marker.ADD
+            marker.pose.position.x = float(xyz[0])
+            marker.pose.position.y = float(xyz[1])
+            marker.pose.position.z = float(max(0.3, xyz[2] + 0.3))
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 0.65
+            marker.scale.y = 0.65
+            marker.scale.z = 0.65
+            marker.color.r = 1.0
+            marker.color.a = 1.0
+            arr.markers.append(marker)
+
+        self.tree_pub.publish(arr)
+
+    def publish_actual_tree_markers(self):
+        arr = MarkerArray()
+        now = self.get_clock().now().to_msg()
+
+        for i, (x, y, _z) in enumerate(get_actual_tree_positions_gazebo(0.0)):
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = now
+            marker.ns = "actual_trees_sdf_gazebo"
+            marker.id = int(i)
+            marker.type = Marker.CYLINDER
+            marker.action = Marker.ADD
+            marker.pose.position.x = float(x)
+            marker.pose.position.y = float(y)
+            marker.pose.position.z = 0.8
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 0.55
+            marker.scale.y = 0.55
+            marker.scale.z = 1.60
+            marker.color.b = 1.0
+            marker.color.a = 0.75
+            arr.markers.append(marker)
+
+        self.actual_tree_pub.publish(arr)
+
+    def publish_route(self):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "route"
+        marker.id = 1
+        marker.type = Marker.LINE_STRIP
+        marker.action = Marker.ADD
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 0.035
+        marker.color.b = 1.0
+        marker.color.a = 1.0
+
+        for xyz in self.route:
+            p = Point()
+            p.x = float(xyz[0])
+            p.y = float(xyz[1])
+            p.z = float(xyz[2])
+            marker.points.append(p)
+
+        self.route_pub.publish(marker)
+
+    @staticmethod
+    def normalize(angle: float):
+        return math.atan2(math.sin(angle), math.cos(angle))
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = SawitRandomPointCloudNavigator()
+    executor = MultiThreadedExecutor(num_threads=3)
+    executor.add_node(node)
+
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        executor.shutdown()
+        node.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

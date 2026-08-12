@@ -1,0 +1,296 @@
+{
+  "version": "V21H",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1784388672.0575628,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 13.10148161515118,
+      "y": 3.6365325899807206,
+      "state": "visited",
+      "hits": 125,
+      "strong_hits": 50,
+      "tof_hits": 136,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 361.24613395303317,
+      "position_mad": 0.16013444352466719
+    },
+    {
+      "tree_id": 1,
+      "x": 12.566125571412966,
+      "y": -4.221389547212395,
+      "state": "visited",
+      "hits": 170,
+      "strong_hits": 47,
+      "tof_hits": 192,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 332.7315747136073,
+      "position_mad": 0.40930372763189793
+    },
+    {
+      "tree_id": 2,
+      "x": 20.997021051510877,
+      "y": -4.390028575579589,
+      "state": "visited",
+      "hits": 113,
+      "strong_hits": 73,
+      "tof_hits": 101,
+      "sectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 351.5130541739588,
+      "position_mad": 0.20569642533753613
+    },
+    {
+      "tree_id": 3,
+      "x": 20.633211193772105,
+      "y": -11.777441488945168,
+      "state": "visited",
+      "hits": 126,
+      "strong_hits": 57,
+      "tof_hits": 109,
+      "sectors": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 353.4618639273006,
+      "position_mad": 0.30316106327386666
+    },
+    {
+      "tree_id": 4,
+      "x": 20.06903143851721,
+      "y": 3.778728264286317,
+      "state": "confirmed",
+      "hits": 122,
+      "strong_hits": 54,
+      "tof_hits": 133,
+      "sectors": [
+        0,
+        1,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 353.40652565762406,
+      "position_mad": 0.4203896899963053
+    },
+    {
+      "tree_id": 5,
+      "x": 20.865915752626485,
+      "y": 11.717742648914449,
+      "state": "visited",
+      "hits": 86,
+      "strong_hits": 25,
+      "tof_hits": 44,
+      "sectors": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 274.9840312178488,
+      "position_mad": 0.09765500757091165
+    },
+    {
+      "tree_id": 6,
+      "x": 13.334868499678576,
+      "y": 11.729871202884068,
+      "state": "visited",
+      "hits": 89,
+      "strong_hits": 47,
+      "tof_hits": 91,
+      "sectors": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "verify_failures": 0,
+      "last_score": 348.70911422114386,
+      "position_mad": 1.2592915752793212
+    },
+    {
+      "tree_id": 7,
+      "x": 13.039117384072808,
+      "y": -11.666184252939138,
+      "state": "visited",
+      "hits": 130,
+      "strong_hits": 43,
+      "tof_hits": 127,
+      "sectors": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 306.4462880598394,
+      "position_mad": 0.593152376916676
+    },
+    {
+      "tree_id": 8,
+      "x": 29.417403576694397,
+      "y": 2.8666112250992204,
+      "state": "confirmed",
+      "hits": 77,
+      "strong_hits": 15,
+      "tof_hits": 70,
+      "sectors": [
+        2,
+        3,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 335.13341211837275,
+      "position_mad": 0.20539801173598327
+    },
+    {
+      "tree_id": 9,
+      "x": 29.57885846671371,
+      "y": 10.69858642680688,
+      "state": "confirmed",
+      "hits": 53,
+      "strong_hits": 12,
+      "tof_hits": 54,
+      "sectors": [
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 328.0679487328945,
+      "position_mad": 0.27061960033351473
+    },
+    {
+      "tree_id": 10,
+      "x": 37.15119095233548,
+      "y": 10.069821095301656,
+      "state": "confirmed",
+      "hits": 34,
+      "strong_hits": 25,
+      "tof_hits": 10,
+      "sectors": [
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 270.7327172318445,
+      "position_mad": 0.68442882441823
+    },
+    {
+      "tree_id": 12,
+      "x": 36.94374273927193,
+      "y": -5.585080760492423,
+      "state": "confirmed",
+      "hits": 34,
+      "strong_hits": 16,
+      "tof_hits": 21,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 276.31092354161063,
+      "position_mad": 0.5601034182758503
+    },
+    {
+      "tree_id": 14,
+      "x": 29.067877943657297,
+      "y": -4.924575312804194,
+      "state": "confirmed",
+      "hits": 42,
+      "strong_hits": 15,
+      "tof_hits": 57,
+      "sectors": [
+        2,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 324.9119700519932,
+      "position_mad": 0.40619736701426123
+    },
+    {
+      "tree_id": 15,
+      "x": 37.44639276547667,
+      "y": 2.2204174316620575,
+      "state": "tentative",
+      "hits": 5,
+      "strong_hits": 2,
+      "tof_hits": 0,
+      "sectors": [
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 298.5993207080702,
+      "position_mad": 0.013491787453659754
+    },
+    {
+      "tree_id": 16,
+      "x": 28.390161583174255,
+      "y": -12.797143985975442,
+      "state": "confirmed",
+      "hits": 25,
+      "strong_hits": 21,
+      "tof_hits": 25,
+      "sectors": [
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 337.7416668894775,
+      "position_mad": 0.2110062869999108
+    },
+    {
+      "tree_id": 17,
+      "x": 35.97304177097308,
+      "y": -13.600895870879668,
+      "state": "confirmed",
+      "hits": 7,
+      "strong_hits": 2,
+      "tof_hits": 7,
+      "sectors": [
+        5,
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 328.93073728869325,
+      "position_mad": 0.019801451267158918
+    }
+  ]
+}

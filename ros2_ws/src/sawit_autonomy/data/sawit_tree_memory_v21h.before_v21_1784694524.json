@@ -1,0 +1,186 @@
+{
+  "version": "V21H",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1784693849.1354187,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 12.570682177429665,
+      "y": -4.155624743769051,
+      "state": "visited",
+      "hits": 57,
+      "strong_hits": 35,
+      "tof_hits": 70,
+      "sectors": [
+        0,
+        3,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 338.28404922997424,
+      "position_mad": 0.296810096173902
+    },
+    {
+      "tree_id": 1,
+      "x": 13.30553088070659,
+      "y": 3.7321891970801473,
+      "state": "visited",
+      "hits": 45,
+      "strong_hits": 20,
+      "tof_hits": 49,
+      "sectors": [
+        0,
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 357.7617441069016,
+      "position_mad": 0.5490151684754596
+    },
+    {
+      "tree_id": 2,
+      "x": 21.903303741124233,
+      "y": 2.6784872581068546,
+      "state": "confirmed",
+      "hits": 48,
+      "strong_hits": 7,
+      "tof_hits": 40,
+      "sectors": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "verify_failures": 0,
+      "last_score": 324.7202433364266,
+      "position_mad": 0.47232250145409943
+    },
+    {
+      "tree_id": 3,
+      "x": 14.308938289064514,
+      "y": 11.22083256736224,
+      "state": "confirmed",
+      "hits": 15,
+      "strong_hits": 7,
+      "tof_hits": 15,
+      "sectors": [
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 341.69915427333115,
+      "position_mad": 0.18354184564690712
+    },
+    {
+      "tree_id": 4,
+      "x": 12.646261287909898,
+      "y": -11.709148592816653,
+      "state": "visited",
+      "hits": 31,
+      "strong_hits": 28,
+      "tof_hits": 33,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 324.9117628518168,
+      "position_mad": 0.09580881224644067
+    },
+    {
+      "tree_id": 5,
+      "x": 20.388706214667895,
+      "y": -12.892940321402556,
+      "state": "confirmed",
+      "hits": 47,
+      "strong_hits": 14,
+      "tof_hits": 59,
+      "sectors": [
+        0,
+        1,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 348.1252266954754,
+      "position_mad": 0.3548335518286104
+    },
+    {
+      "tree_id": 6,
+      "x": 21.356918277849196,
+      "y": -5.084390307381709,
+      "state": "confirmed",
+      "hits": 30,
+      "strong_hits": 20,
+      "tof_hits": 30,
+      "sectors": [
+        0,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 343.12674291923645,
+      "position_mad": 0.4129845930182628
+    },
+    {
+      "tree_id": 7,
+      "x": 29.430808864857195,
+      "y": -5.756339365300555,
+      "state": "confirmed",
+      "hits": 5,
+      "strong_hits": 3,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 278.4105024109829,
+      "position_mad": 0.07211205709275692
+    },
+    {
+      "tree_id": 8,
+      "x": 22.515354914417365,
+      "y": 10.566389802396817,
+      "state": "confirmed",
+      "hits": 28,
+      "strong_hits": 5,
+      "tof_hits": 28,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 329.4057148419288,
+      "position_mad": 0.07017293092296162
+    },
+    {
+      "tree_id": 9,
+      "x": 29.777838236223577,
+      "y": 2.0080730942149465,
+      "state": "confirmed",
+      "hits": 12,
+      "strong_hits": 3,
+      "tof_hits": 12,
+      "sectors": [
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 307.2491749296404,
+      "position_mad": 0.11318178967115866
+    },
+    {
+      "tree_id": 10,
+      "x": 36.93022017783493,
+      "y": -6.661002627821059,
+      "state": "confirmed",
+      "hits": 16,
+      "strong_hits": 15,
+      "tof_hits": 0,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 259.38451398669406,
+      "position_mad": 0.01325529670619403
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "version": "V21H",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1784558401.9442542,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 12.829561998088252,
+      "y": 3.5477364914921643,
+      "state": "visited",
+      "hits": 53,
+      "strong_hits": 25,
+      "tof_hits": 60,
+      "sectors": [
+        0,
+        1,
+        3
+      ],
+      "verify_failures": 0,
+      "last_score": 321.8625153256508,
+      "position_mad": 0.2884502225802158
+    },
+    {
+      "tree_id": 1,
+      "x": 21.729665351821982,
+      "y": 10.518490294492928,
+      "state": "confirmed",
+      "hits": 44,
+      "strong_hits": 29,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 278.1285640338785,
+      "position_mad": 0.5177362944487329
+    },
+    {
+      "tree_id": 2,
+      "x": 20.2588221886765,
+      "y": -12.74163934892788,
+      "state": "confirmed",
+      "hits": 23,
+      "strong_hits": 9,
+      "tof_hits": 19,
+      "sectors": [
+        0,
+        1,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 320.7412802215848,
+      "position_mad": 0.5604304560435998
+    },
+    {
+      "tree_id": 3,
+      "x": 14.257525309887129,
+      "y": 11.319647514675696,
+      "state": "confirmed",
+      "hits": 34,
+      "strong_hits": 8,
+      "tof_hits": 38,
+      "sectors": [
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 338.64014340034674,
+      "position_mad": 0.6729982413613699
+    },
+    {
+      "tree_id": 4,
+      "x": 12.536868715630014,
+      "y": -11.853097331117334,
+      "state": "visited",
+      "hits": 51,
+      "strong_hits": 22,
+      "tof_hits": 61,
+      "sectors": [
+        0,
+        5,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 329.51660262988634,
+      "position_mad": 0.16086581931752936
+    },
+    {
+      "tree_id": 5,
+      "x": 22.0546343284273,
+      "y": 2.6478732091995365,
+      "state": "confirmed",
+      "hits": 32,
+      "strong_hits": 11,
+      "tof_hits": 31,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 329.5528005100459,
+      "position_mad": 0.18369274689544235
+    },
+    {
+      "tree_id": 6,
+      "x": 28.893817319267928,
+      "y": 2.018851546014722,
+      "state": "confirmed",
+      "hits": 8,
+      "strong_hits": 2,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 298.6938244057137,
+      "position_mad": 0.22762966231609894
+    },
+    {
+      "tree_id": 7,
+      "x": 12.136209524716508,
+      "y": -3.9575218597125232,
+      "state": "confirmed",
+      "hits": 9,
+      "strong_hits": 4,
+      "tof_hits": 11,
+      "sectors": [
+        6
+      ],
+      "verify_failures": 0,
+      "last_score": 330.82024292720024,
+      "position_mad": 0.2749194249168879
+    },
+    {
+      "tree_id": 8,
+      "x": 20.07335264707436,
+      "y": -4.993610599967754,
+      "state": "confirmed",
+      "hits": 35,
+      "strong_hits": 18,
+      "tof_hits": 40,
+      "sectors": [
+        2,
+        6,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 354.36878294042646,
+      "position_mad": 0.3249878934996908
+    },
+    {
+      "tree_id": 9,
+      "x": 36.959184160775195,
+      "y": -6.478956488083662,
+      "state": "confirmed",
+      "hits": 21,
+      "strong_hits": 18,
+      "tof_hits": 0,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 269.40572962654005,
+      "position_mad": 0.13969889948311875
+    },
+    {
+      "tree_id": 10,
+      "x": 29.61752752535534,
+      "y": -5.737643865460315,
+      "state": "confirmed",
+      "hits": 19,
+      "strong_hits": 6,
+      "tof_hits": 25,
+      "sectors": [
+        1,
+        2
+      ],
+      "verify_failures": 0,
+      "last_score": 266.7099090293325,
+      "position_mad": 0.5027811351010603
+    }
+  ]
+}

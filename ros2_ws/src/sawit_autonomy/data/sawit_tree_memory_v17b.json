@@ -1,0 +1,17 @@
+{
+  "version": "V17_clean_no_grid_pointcloud_stable",
+  "target_tree_count": 16,
+  "takeoff_height": 0.5,
+  "visited_count": 1,
+  "trees": [
+    {
+      "id": 1,
+      "local_x": -4.927788838539859,
+      "local_y": 12.274754456131294,
+      "map_x": -12.725245543868706,
+      "map_y": -4.927788838539859,
+      "obs_count": 4,
+      "score": 171.51089062404057
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "version": "V21H",
+  "frame": "ENU_relative_home",
+  "updated_unix": 1784040625.4593651,
+  "tracks": [
+    {
+      "tree_id": 0,
+      "x": 13.28016719933039,
+      "y": 2.89727620267802,
+      "state": "confirmed",
+      "hits": 38,
+      "strong_hits": 4,
+      "tof_hits": 57,
+      "sectors": [
+        0,
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 317.1120486266607,
+      "position_mad": 0.28105305567505534
+    },
+    {
+      "tree_id": 1,
+      "x": 20.99920445895153,
+      "y": 2.165166443617456,
+      "state": "tentative",
+      "hits": 20,
+      "strong_hits": 6,
+      "tof_hits": 0,
+      "sectors": [
+        0
+      ],
+      "verify_failures": 0,
+      "last_score": 295.46807095346,
+      "position_mad": 0.123937392716544
+    },
+    {
+      "tree_id": 2,
+      "x": 19.573076929644326,
+      "y": -13.571153653459808,
+      "state": "confirmed",
+      "hits": 38,
+      "strong_hits": 14,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 244.28317149080934,
+      "position_mad": 0.33735477611076625
+    },
+    {
+      "tree_id": 3,
+      "x": 12.562348922270633,
+      "y": -5.089305213650187,
+      "state": "confirmed",
+      "hits": 38,
+      "strong_hits": 6,
+      "tof_hits": 51,
+      "sectors": [
+        0,
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 308.57688591320306,
+      "position_mad": 0.4460279020625123
+    },
+    {
+      "tree_id": 4,
+      "x": 21.93690107989803,
+      "y": 9.679850225509142,
+      "state": "confirmed",
+      "hits": 29,
+      "strong_hits": 4,
+      "tof_hits": 0,
+      "sectors": [
+        0,
+        1
+      ],
+      "verify_failures": 0,
+      "last_score": 276.9317816483343,
+      "position_mad": 0.23931871941968932
+    },
+    {
+      "tree_id": 5,
+      "x": 11.533826794670512,
+      "y": -13.30880173109152,
+      "state": "confirmed",
+      "hits": 18,
+      "strong_hits": 5,
+      "tof_hits": 19,
+      "sectors": [
+        7
+      ],
+      "verify_failures": 0,
+      "last_score": 317.05060583482276,
+      "position_mad": 0.16667774886958855
+    }
+  ]
+}
