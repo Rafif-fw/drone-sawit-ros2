@@ -122,7 +122,6 @@ class SawitRandomKalman321TofEveryUpdate(
         return [
             "ros_time_sec",
             "run_id",
-            "random_seed",
             "rx_index",
             "target_id",
             "nav_state",
@@ -186,7 +185,6 @@ class SawitRandomKalman321TofEveryUpdate(
         row = {
             "ros_time_sec": f"{ros_time:.6f}",
             "run_id": str(getattr(self, "normal_run_id", "")),
-            "random_seed": int(getattr(self, "normal_random_seed", 0)),
             "rx_index": self._tof_kalman_rx,
             "target_id": target_id,
             "nav_state": state,

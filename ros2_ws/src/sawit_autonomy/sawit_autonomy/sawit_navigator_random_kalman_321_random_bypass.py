@@ -388,17 +388,8 @@ class SawitRandomKalman321RandomBypass(
             ),
         )
 
-        # Random dibuat reproducible dari seed run.
-        seed = int(
-            getattr(
-                self,
-                "normal_random_seed",
-                self.get_parameter(
-                    "normal_random_seed"
-                ).value,
-            )
-        )
-        self._bypass_rng = random.Random(seed + 314159)
+        # Random dinamis: tidak menggunakan seed tetap.
+        self._bypass_rng = random.Random()
 
         self._bypass_plan: Optional[RandomBypassPlan] = None
 

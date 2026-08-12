@@ -246,7 +246,6 @@ class DepthCameraEveryMessageKalmanAntiStuckMixin:
         return [
             "ros_time_sec",
             "run_id",
-            "seed",
             "depth_rx",
             "cloud_seq",
             "target_id",
@@ -315,9 +314,6 @@ class DepthCameraEveryMessageKalmanAntiStuckMixin:
             ),
             "run_id": str(
                 getattr(self, "normal_run_id", "")
-            ),
-            "seed": int(
-                getattr(self, "normal_random_seed", 0)
             ),
             "depth_rx": self.depth_rx,
             "cloud_seq": int(
@@ -944,7 +940,6 @@ class SawitDepthKalman321AntiStuck(
         self.get_logger().info(
             "START DEPTH_KALMAN_321_ANTISTUCK_V2 "
             f"run_id={getattr(self, 'normal_run_id', '')} "
-            f"seed={getattr(self, 'normal_random_seed', '')} "
             "depth_every_valid_camera_message=1 "
             "tof_every_valid_message=1 "
             "verification_321=1 "
@@ -965,7 +960,6 @@ class SawitDepthKalmanDirect1MAntiStuck(
         self.get_logger().info(
             "START DEPTH_KALMAN_DIRECT1M_ANTISTUCK_V2 "
             f"run_id={getattr(self, 'normal_run_id', '')} "
-            f"seed={getattr(self, 'normal_random_seed', '')} "
             "depth_every_valid_camera_message=1 "
             "tof_every_valid_message=1 "
             "verification_321=0 "

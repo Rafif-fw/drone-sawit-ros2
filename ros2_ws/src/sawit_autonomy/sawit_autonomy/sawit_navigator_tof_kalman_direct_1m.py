@@ -125,7 +125,6 @@ class SawitTofKalmanDirect1M(
         self.get_logger().info(
             "START TOF_KALMAN_DIRECT_1M_V1 "
             f"run_id={getattr(self, 'normal_run_id', '')} "
-            f"seed={getattr(self, 'normal_random_seed', '')} "
             "pointcloud_kalman=kept "
             "tof_every_valid_message_kalman=1 "
             "gate3_disabled=1 miniscan3_disabled=1 "

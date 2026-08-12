@@ -139,7 +139,6 @@ class SawitRandomKalman321V22(_BASE_CLASS):
         # Parameter eksperimen kondisi normal
         # ------------------------------------------------------------------
         self.declare_parameter("normal_run_id", "normal_01")
-        self.declare_parameter("normal_random_seed", 101)
         self.declare_parameter("normal_csv_path", str(
             Path.home()
             / "ros2_ws/src/sawit_autonomy/data/"
@@ -167,9 +166,6 @@ class SawitRandomKalman321V22(_BASE_CLASS):
 
         self.normal_run_id = str(
             self.get_parameter("normal_run_id").value
-        )
-        self.normal_random_seed = int(
-            self.get_parameter("normal_random_seed").value
         )
         self.normal_csv_path = Path(
             str(self.get_parameter("normal_csv_path").value)
@@ -256,10 +252,7 @@ class SawitRandomKalman321V22(_BASE_CLASS):
         if hasattr(self, "tof_layer1_near_max_v21n12"):
             self.tof_layer1_near_max_v21n12 = 1.22
 
-        # Seed dibuat eksplisit agar tiga run dapat direplikasi.
-        random_engine = getattr(self, "random", None)
-        if random_engine is not None and hasattr(random_engine, "seed"):
-            random_engine.seed(self.normal_random_seed)
+        # Random engine dari base dibiarkan dinamis pada setiap proses.
 
         self._kalman_tracks: Dict[int, KalmanTrack2D] = {}
         self._last_track_update: Dict[int, float] = {}
@@ -278,7 +271,6 @@ class SawitRandomKalman321V22(_BASE_CLASS):
         self.get_logger().info(
             "START V22 NORMAL RANDOM KALMAN 3-2-1 "
             f"run_id={self.normal_run_id} "
-            f"seed={self.normal_random_seed} "
             f"layer3={self.v22_layer3:.2f}m "
             f"layer2={self.v22_layer2:.2f}m "
             f"layer1={self.v22_layer1:.2f}m "
@@ -618,7 +610,6 @@ class SawitRandomKalman321V22(_BASE_CLASS):
         return [
             "timestamp_ros_sec",
             "run_id",
-            "random_seed",
             "scan_generation",
             "queue_position",
             "target_id",
@@ -835,7 +826,6 @@ class SawitRandomKalman321V22(_BASE_CLASS):
         row = {
             "timestamp_ros_sec": f"{ros_seconds:.6f}",
             "run_id": self.normal_run_id,
-            "random_seed": self.normal_random_seed,
             "scan_generation": int(
                 getattr(self, "scan_generation", 0)
             ),

@@ -357,7 +357,6 @@ class SawitDepthKalman321CollisionSafeV3(
         self.get_logger().info(
             "START DEPTH_KALMAN_321_COLLISION_SAFE_V3 "
             f"run_id={getattr(self, 'normal_run_id', '')} "
-            f"seed={getattr(self, 'normal_random_seed', '')} "
             "verification_321=1 actual_used_for_control=0"
         )
 
@@ -373,7 +372,6 @@ class SawitDepthKalmanDirect1MCollisionSafeV3(
         self.get_logger().info(
             "START DEPTH_KALMAN_DIRECT1M_COLLISION_SAFE_V3 "
             f"run_id={getattr(self, 'normal_run_id', '')} "
-            f"seed={getattr(self, 'normal_random_seed', '')} "
             "verification_321=0 visit=direct_1m "
             "actual_used_for_control=0"
         )
