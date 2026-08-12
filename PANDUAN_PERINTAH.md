@@ -113,20 +113,6 @@ Terminal navigator:
 ~/run_sawit_depth_kalman_321_antistuck.sh depth321_fix_01
 ```
 
-## Pilihan D — Percobaan dengan 3–2–1 collision-safe
-
-Terminal monitor:
-
-```bash
-~/monitor_sawit_depth_kalman_time.sh depth321_safe_01
-```
-
-Terminal navigator:
-
-```bash
-~/run_sawit_depth_kalman_321_collision_safe.sh depth321_safe_01
-```
-
 ## Menghentikan simulasi
 
 Tekan `Ctrl+C` pada terminal navigator, monitor, bridge, agent, dan PX4. Setelah itu jalankan:
