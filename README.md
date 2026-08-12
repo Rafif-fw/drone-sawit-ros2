@@ -96,7 +96,7 @@ World kebun:
 px4_custom/Tools/simulation/gz/worlds/kebun_sawit.sdf
 ```
 
-World tersebut menempatkan 16 model sawit pada koordinat -12, -4, 4, dan 12 meter pada sumbu X/Y.
+World tersebut menempatkan 16 model sawit 
 
 ## Instalasi singkat
 
