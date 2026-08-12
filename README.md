@@ -34,6 +34,7 @@ drone-sawit-ros2/
 │       ├── sawit_autonomy/           # node Python ROS 2
 │       ├── package.xml
 │       └── setup.py
+├── scripts/                         # monitor dan runner percobaan
 ├── PANDUAN_PERINTAH.md
 └── README.md
 ```
@@ -46,7 +47,7 @@ Node aktif utama:
 ros2 run sawit_autonomy sawit_navigator_fast
 ```
 
-Entry point tersebut menjalankan node `sawit_navigator_fast_v21h`. Berbagai node eksperimen terdahulu tetap disertakan sebagai arsip pengembangan dan pembanding.
+Entry point tersebut menjalankan node `sawit_navigator_fast_v21h`. Repository menyertakan dua varian percobaan utama: tanpa verifikasi 3–2–1 dan dengan verifikasi 3–2–1.
 
 ## Topic utama
 
@@ -122,7 +123,7 @@ rsync -a ros2_ws/src/sawit_autonomy/ ~/ros2_ws/src/sawit_autonomy/
 source /opt/ros/humble/setup.bash
 cd ~/ros2_ws
 rosdep install --from-paths src --ignore-src -r -y
-colcon build --symlink-install --packages-select sawit_autonomy
+colcon build --packages-select sawit_autonomy
 source install/setup.bash
 ```
 
@@ -151,7 +152,7 @@ Posisi aktual dari SDF hanya dipakai untuk visualisasi/perbandingan hasil dan ti
 
 ## Data penelitian
 
-Folder `ros2_ws/src/sawit_autonomy/data/` menyimpan contoh keluaran percobaan berupa CSV dan JSON. File tersebut dipertahankan agar evolusi eksperimen dan hasil pengukuran dapat ditelusuri.
+Folder `ros2_ws/src/sawit_autonomy/data/` disediakan untuk keluaran CSV dan JSON saat program dijalankan. Data percobaan lokal tidak disertakan dalam repository publik.
 
 ## Status
 

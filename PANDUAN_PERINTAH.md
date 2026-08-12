@@ -57,74 +57,30 @@ colcon build --packages-select sawit_autonomy
 source ~/ros2_ws/install/setup.bash
 ```
 
-Build tidak perlu diulang jika kode tidak berubah.
-
-## Pilihan A — Menjalankan base code
-
-Jalankan di terminal navigator:
+## Percobaan tanpa 3–2–1
 
 ```bash
-source /opt/ros/humble/setup.bash
-source ~/ros2_ws/install/setup.bash
-
-ros2 run sawit_autonomy sawit_navigator_fast --ros-args \
-  -p target_tree_count:=16 \
-  -p visual_spawn_x:=-25.0 \
-  -p visual_spawn_y:=0.0 \
-  -p reset_memory_on_start:=true
+~/drone-sawit-ros2/scripts/monitor_sawit_depth_kalman_time.sh depth_direct_fix_01
 ```
 
-Monitor base pada terminal terpisah:
-
 ```bash
-source /opt/ros/humble/setup.bash
-source ~/ros2_ws/install/setup.bash
-
-ros2 topic echo /rosout \
-| grep --line-buffered -E \
-"START V21|STATE_V21H|SCAN|TARGET|TREE_VISITED|VISUAL_COMPARE|MISSION_COLLISION_ABORT|Traceback"
+~/drone-sawit-ros2/scripts/run_sawit_depth_kalman_direct1m_antistuck.sh depth_direct_fix_01
 ```
 
-## Pilihan B — Percobaan tanpa 3–2–1
-
-Terminal monitor:
+## Percobaan dengan 3–2–1
 
 ```bash
-~/monitor_sawit_depth_kalman_time.sh depth_direct_fix_01
+~/drone-sawit-ros2/scripts/monitor_sawit_depth_kalman_time.sh depth321_fix_01
 ```
 
-Terminal navigator:
-
 ```bash
-~/run_sawit_depth_kalman_direct1m_antistuck.sh depth_direct_fix_01
+~/drone-sawit-ros2/scripts/run_sawit_depth_kalman_321_antistuck.sh depth321_fix_01
 ```
 
-## Pilihan C — Percobaan dengan 3–2–1 antistuck
-
-Terminal monitor:
+## Monitor Topik
 
 ```bash
-~/monitor_sawit_depth_kalman_time.sh depth321_fix_01
-```
-
-Terminal navigator:
-
-```bash
-~/run_sawit_depth_kalman_321_antistuck.sh depth321_fix_01
-```
-
-## Pilihan D — Percobaan dengan 3–2–1 collision-safe
-
-Terminal monitor:
-
-```bash
-~/monitor_sawit_depth_kalman_time.sh depth321_safe_01
-```
-
-Terminal navigator:
-
-```bash
-~/run_sawit_depth_kalman_321_collision_safe.sh depth321_safe_01
+rviz2
 ```
 
 ## Menghentikan simulasi
@@ -137,4 +93,3 @@ pkill -f parameter_bridge 2>/dev/null || true
 pkill -f px4 2>/dev/null || true
 pkill -f "gz sim" 2>/dev/null || true
 ```
-
