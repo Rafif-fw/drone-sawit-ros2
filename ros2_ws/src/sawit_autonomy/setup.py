@@ -69,40 +69,19 @@ setup(
 
     entry_points={
         "console_scripts": [
-            'sawit_navigator_depth_kalman_direct1m_collision_safe = sawit_autonomy.sawit_navigator_depth_kalman_collision_safe_v3:main_direct1m',
-            'sawit_navigator_depth_kalman_321_collision_safe = sawit_autonomy.sawit_navigator_depth_kalman_collision_safe_v3:main_321',
-            'sawit_flight_time_speed_monitor = sawit_autonomy.sawit_flight_time_speed_monitor:main',
-            'sawit_flight_time_monitor_depth_dual = sawit_autonomy.sawit_flight_time_monitor_depth_dual:main',
-            'sawit_navigator_depth_kalman_direct1m_antistuck = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual_antistuck:main_direct1m',
-            'sawit_navigator_depth_kalman_321_antistuck = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual_antistuck:main_321',
-            'sawit_navigator_depth_camera_kalman_direct_1m = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual:main_direct_1m',
-            'sawit_navigator_depth_camera_kalman_321 = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual:main_321',
-            'sawit_navigator_random_kalman_321_final = sawit_autonomy.sawit_navigator_random_kalman_321_final:main',
-            'sawit_navigator_random_kalman_321_random_bypass = sawit_autonomy.sawit_navigator_random_kalman_321_random_bypass:main',
-            'sawit_flight_time_monitor = sawit_autonomy.sawit_flight_time_monitor:main',
-            'sawit_navigator_random_kalman_321_tof_every_update = sawit_autonomy.sawit_navigator_random_kalman_321_tof_every_update:main',
-            'sawit_flight_time_monitor_v2 = sawit_autonomy.sawit_flight_time_monitor_v2:main',
-            'sawit_navigator_tof_kalman_direct_1m = sawit_autonomy.sawit_navigator_tof_kalman_direct_1m:main',
-            'sawit_navigator_random_kalman_321 = sawit_autonomy.sawit_navigator_random_kalman_321_v22:main',
-        "sawit_navigator = sawit_autonomy.sawit_navigator:main",
+            # Navigator utama/base
             "sawit_navigator_fast = sawit_autonomy.sawit_navigator_fast:main",
-            'sawit_random_3layer_navigator = sawit_autonomy.sawit_random_3layer_navigator:main',
-            "sawit_navigator_tof_camera_memory = sawit_autonomy.sawit_navigator_tof_camera_memory:main",
-        (
-            "sawit_random_pointcloud_navigator = "
-            "sawit_autonomy.sawit_random_pointcloud_navigator:main"
-        ),
-        (
-            "sawit_random_depth_navigator = "
-            "sawit_autonomy.sawit_random_depth_navigator:main"
-        ),
-        (
-            "sawit_slam_random_navigator = "
-            "sawit_autonomy.sawit_slam_random_navigator:main"
-        ),
-                    'sawit_navigator_bfs = sawit_autonomy.sawit_navigator_bfs:main',
-                    'sawit_tree_memory_mapper = sawit_autonomy.sawit_tree_memory_mapper:main',
-            'sawit_navigator_dfs = sawit_autonomy.sawit_navigator_dfs:main',
-],
+
+            # Percobaan tanpa metode 3-2-1
+            "sawit_navigator_depth_kalman_direct1m_antistuck = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual_antistuck:main_direct1m",
+
+            # Percobaan dengan metode 3-2-1
+            "sawit_navigator_depth_kalman_321_antistuck = sawit_autonomy.sawit_navigator_depth_camera_kalman_dual_antistuck:main_321",
+            "sawit_navigator_depth_kalman_321_collision_safe = sawit_autonomy.sawit_navigator_depth_kalman_collision_safe_v3:main_321",
+
+            # Monitor percobaan
+            "sawit_flight_time_speed_monitor = sawit_autonomy.sawit_flight_time_speed_monitor:main",
+            "sawit_flight_time_monitor_depth_dual = sawit_autonomy.sawit_flight_time_monitor_depth_dual:main",
+        ],
     },
 )
