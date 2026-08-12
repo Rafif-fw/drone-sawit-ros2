@@ -1,4 +1,0 @@
-wall_time,label,algorithm_name,run_id,seed,target_count,algorithm_duration_sec,flight_duration_sec,max_altitude_m,completed
-2026-07-18 16:07:22,tof_kalman_new_01,,,,16,3199.656,3199.656,0.031,1
-2026-07-18 16:07:22,tof_kalman_new_01,tof_every_message_kalman,tof_kalman_new_01,101,16,3846.074,3835.711,0.747,1
-2026-07-18 18:31:35,baseline_old_01,pointcloud_kalman_baseline,baseline_old_01,101,16,4261.130,4242.551,0.750,1

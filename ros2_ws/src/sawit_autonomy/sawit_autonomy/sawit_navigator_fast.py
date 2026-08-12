@@ -938,7 +938,7 @@ class SawitNavigatorV21H(Node):
         self.hold_xy = (0.0, 0.0)
         self.hold_yaw = 0.0
 
-        self.random = random.Random(20260714)
+        self.random = random.Random()
 
         self._load_or_reset_memory()
 
