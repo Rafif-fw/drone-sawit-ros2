@@ -1,0 +1,38 @@
+# ROS 2 / colcon
+**/build/
+**/install/
+**/log/
+
+# Python
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# PX4 / Gazebo runtime
+*.ulg
+*.log
+*.tmp
+
+# ROS bags and databases
+*.bag
+*.bag.active
+*.db
+*.db3
+*.mcap
+
+# Automatically generated memory backups
+**/*.before_v21_*.json
+
+# Editors and local configuration
+.vscode/
+.idea/
+*.swp
+.env
+.env.*
+!.env.example
+
+# Operating system
+.DS_Store
+Thumbs.db
