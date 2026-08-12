@@ -152,7 +152,7 @@ Posisi aktual dari SDF hanya dipakai untuk visualisasi/perbandingan hasil dan ti
 
 ## Data penelitian
 
-Folder `ros2_ws/src/sawit_autonomy/data/` disediakan untuk keluaran CSV dan JSON saat program dijalankan. Data percobaan lokal tidak disertakan dalam repository publik.
+Folder `ros2_ws/src/sawit_autonomy/data/` disediakan untuk keluaran CSV dan JSON saat program dijalankan.
 
 ## Status
 
