@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sdf version="1.9">
+  <model name="x500">
+
+    <!-- ====================================================== -->
+    <!-- BASE MODEL X500 ASLI PX4                              -->
+    <!-- ====================================================== -->
+
+    <include merge="true">
+      <uri>model://x500_base</uri>
+    </include>
+
+    <!-- ====================================================== -->
+    <!-- MOTOR 0                                                -->
+    <!-- ====================================================== -->
+
+    <plugin
+      filename="gz-sim-multicopter-motor-model-system"
+      name="gz::sim::systems::MulticopterMotorModel">
+
+      <jointName>rotor_0_joint</jointName>
+      <linkName>rotor_0</linkName>
+      <turningDirection>ccw</turningDirection>
+
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>0</motorNumber>
+
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+
+      <motorType>velocity</motorType>
+    </plugin>
+
+    <!-- ====================================================== -->
+    <!-- MOTOR 1                                                -->
+    <!-- ====================================================== -->
+
+    <plugin
+      filename="gz-sim-multicopter-motor-model-system"
+      name="gz::sim::systems::MulticopterMotorModel">
+
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>ccw</turningDirection>
+
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>1</motorNumber>
+
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+
+      <motorType>velocity</motorType>
+    </plugin>
+
+    <!-- ====================================================== -->
+    <!-- MOTOR 2                                                -->
+    <!-- ====================================================== -->
+
+    <plugin
+      filename="gz-sim-multicopter-motor-model-system"
+      name="gz::sim::systems::MulticopterMotorModel">
+
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>cw</turningDirection>
+
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>2</motorNumber>
+
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+
+      <motorType>velocity</motorType>
+    </plugin>
+
+    <!-- ====================================================== -->
+    <!-- MOTOR 3                                                -->
+    <!-- ====================================================== -->
+
+    <plugin
+      filename="gz-sim-multicopter-motor-model-system"
+      name="gz::sim::systems::MulticopterMotorModel">
+
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>cw</turningDirection>
+
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>3</motorNumber>
+
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+
+      <motorType>velocity</motorType>
+    </plugin>
+
+    <!-- ====================================================== -->
+    <!-- OPTIONAL MOTOR FAILURE PLUGIN                          -->
+    <!-- ====================================================== -->
+
+    <plugin
+      filename="MotorFailurePlugin"
+      name="gz::sim::systems::MotorFailureSystem">
+    </plugin>
+
+    <!-- ====================================================== -->
+    <!-- FRONT SENSOR LINK                                      -->
+    <!-- ====================================================== -->
+
+    <link name="front_sensor_link">
+
+      <!-- Posisi mount di depan drone -->
+      <pose>0.20 0 -0.05 0 0 0</pose>
+
+      <inertial>
+        <mass>0.01</mass>
+
+        <inertia>
+          <ixx>0.000001</ixx>
+          <iyy>0.000001</iyy>
+          <izz>0.000001</izz>
+
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <visual name="front_sensor_visual">
+        <geometry>
+          <box>
+            <size>0.07 0.04 0.03</size>
+          </box>
+        </geometry>
+
+        <material>
+          <ambient>0.05 0.05 0.05 1</ambient>
+          <diffuse>0.05 0.05 0.05 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- ==================================================== -->
+      <!-- FRONT RGB CAMERA                                     -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="camera_front_rgb"
+        type="camera">
+
+        <!-- Menghadap ke depan link -->
+        <pose>0 0 0 0 0 0</pose>
+
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>15</update_rate>
+
+        <topic>/camera_front/image</topic>
+
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+
+          <clip>
+            <near>0.10</near>
+            <far>50.0</far>
+          </clip>
+        </camera>
+      </sensor>
+
+      <!-- ==================================================== -->
+      <!-- FRONT RGBD CAMERA                                    -->
+      <!-- Menghasilkan:                                       -->
+      <!-- /camera/image                                        -->
+      <!-- /camera/depth_image                                  -->
+      <!-- /camera/points                                       -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="camera_front_depth"
+        type="rgbd_camera">
+
+        <!-- Default Gazebo camera menghadap sumbu +X sensor -->
+        <pose>0 0 0 0 0 0</pose>
+
+        <always_on>true</always_on>
+
+        <!-- Aktifkan sementara untuk diagnosis -->
+        <visualize>true</visualize>
+
+        <update_rate>10</update_rate>
+
+        <!-- Tetap /camera agar kode lama tetap kompatibel -->
+        <topic>/camera</topic>
+
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+
+          <clip>
+            <near>0.10</near>
+            <far>50.0</far>
+          </clip>
+        </camera>
+      </sensor>
+
+      <!-- ==================================================== -->
+      <!-- FRONT TOF / LIDAR 180 DEGREE                         -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="tof_front"
+        type="gpu_lidar">
+
+        <pose>0 0 0 0 0 0</pose>
+
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>15</update_rate>
+
+        <topic>/tof_front</topic>
+
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>181</samples>
+              <resolution>1</resolution>
+              <min_angle>-1.5708</min_angle>
+              <max_angle>1.5708</max_angle>
+            </horizontal>
+
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+
+          <range>
+            <min>0.05</min>
+            <max>20.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+
+    </link>
+
+    <joint
+      name="front_sensor_joint"
+      type="fixed">
+
+      <parent>base_link</parent>
+      <child>front_sensor_link</child>
+    </joint>
+
+    <!-- ====================================================== -->
+    <!-- DOWN SENSOR LINK                                       -->
+    <!-- ====================================================== -->
+
+    <link name="down_sensor_link">
+
+      <pose>0 0 -0.12 0 0 0</pose>
+
+      <inertial>
+        <mass>0.01</mass>
+
+        <inertia>
+          <ixx>0.000001</ixx>
+          <iyy>0.000001</iyy>
+          <izz>0.000001</izz>
+
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <visual name="down_sensor_visual">
+        <geometry>
+          <box>
+            <size>0.05 0.05 0.02</size>
+          </box>
+        </geometry>
+
+        <material>
+          <ambient>0 0 1 1</ambient>
+          <diffuse>0 0 1 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <!-- ==================================================== -->
+      <!-- DOWN RGB CAMERA                                      -->
+      <!-- Pitch +90 derajat agar melihat ke bawah              -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="camera_down_rgb"
+        type="camera">
+
+        <pose>0 0 0 0 1.5708 0</pose>
+
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>15</update_rate>
+
+        <topic>/camera_down/image</topic>
+
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+
+          <clip>
+            <near>0.10</near>
+            <far>50.0</far>
+          </clip>
+        </camera>
+      </sensor>
+
+      <!-- ==================================================== -->
+      <!-- DOWN RGBD CAMERA                                     -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="camera_down_depth"
+        type="rgbd_camera">
+
+        <pose>0 0 0 0 1.5708 0</pose>
+
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>10</update_rate>
+
+        <topic>/camera_down</topic>
+
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+
+          <clip>
+            <near>0.10</near>
+            <far>30.0</far>
+          </clip>
+        </camera>
+      </sensor>
+
+      <!-- ==================================================== -->
+      <!-- DOWN TOF / RANGEFINDER                               -->
+      <!-- ==================================================== -->
+
+      <sensor
+        name="tof_down"
+        type="gpu_lidar">
+
+        <pose>0 0 0 0 1.5708 0</pose>
+
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <update_rate>15</update_rate>
+
+        <topic>/tof_down</topic>
+
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+
+          <range>
+            <min>0.05</min>
+            <max>20.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+
+    </link>
+
+    <joint
+      name="down_sensor_joint"
+      type="fixed">
+
+      <parent>base_link</parent>
+      <child>down_sensor_link</child>
+    </joint>
+
+  </model>
+</sdf>

@@ -25,7 +25,9 @@ Repository ini merupakan arsip kode dan aset simulasi penelitian:
 drone-sawit-ros2/
 ├── px4_custom/
 │   └── Tools/simulation/gz/
-│       ├── models/sawit_sedeng/      # mesh, model.sdf, dan texture sawit
+│       ├── models/
+│       │   ├── sawit_sedeng/         # mesh, model.sdf, dan texture sawit
+│       │   └── x500/                 # x500 dengan depth camera, PointCloud, dan ToF
 │       └── worlds/kebun_sawit.sdf    # world 16 pohon
 ├── ros2_ws/
 │   └── src/sawit_autonomy/
@@ -111,6 +113,8 @@ cd drone-sawit-ros2
 mkdir -p ~/PX4-Autopilot/Tools/simulation/gz/models/sawit_sedeng
 rsync -a px4_custom/Tools/simulation/gz/models/sawit_sedeng/ ~/PX4-Autopilot/Tools/simulation/gz/models/sawit_sedeng/
 
+rsync -a px4_custom/Tools/simulation/gz/models/x500/ ~/PX4-Autopilot/Tools/simulation/gz/models/x500/
+
 install -m 0644 px4_custom/Tools/simulation/gz/worlds/kebun_sawit.sdf ~/PX4-Autopilot/Tools/simulation/gz/worlds/kebun_sawit.sdf
 ```
 
@@ -144,11 +148,13 @@ Lihat [PANDUAN_PERINTAH.md](PANDUAN_PERINTAH.md) untuk urutan terminal PX4, Micr
 
 ## Catatan reproduksi penting
 
-Repository saat ini berisi **world kebun**, **model pohon 3D**, dan **package ROS 2**, tetapi belum berisi modifikasi model drone x500 yang memasang kamera depth/PointCloud serta sensor ToF. Perintah utama dapat langsung digunakan pada komputer penelitian yang sudah memiliki PX4-Autopilot dengan konfigurasi sensor tersebut.
+Repository menyertakan world kebun, model pohon 3D, package ROS 2, serta model `x500` yang telah dilengkapi depth camera, PointCloud, dan sensor ToF. Salin model `x500` ke PX4-Autopilot sesuai langkah instalasi sebelum menjalankan simulasi.
 
-Untuk pemasangan baru, model drone harus menerbitkan topic Gazebo yang kemudian dijembatani menjadi `/camera/points` dan `/tof_front`. Gunakan `gz topic -l` untuk melihat nama topic aktual.
+Model tersebut menghasilkan topic Gazebo untuk `/camera/image`, `/camera/depth_image`, `/camera/points`, dan `/tof_front`. Topic tersebut kemudian dijembatani ke ROS 2 menggunakan `ros_gz_bridge`.
 
-Posisi aktual dari SDF hanya dipakai untuk visualisasi/perbandingan hasil dan tidak dipakai sebagai target atau gate navigasi.
+Versi dasar PX4 yang digunakan tercatat di `px4_custom/PX4_BASE_COMMIT.txt`.
+
+Posisi aktual dari SDF hanya dipakai untuk visualisasi dan perbandingan hasil. Posisi aktual tidak digunakan sebagai target atau gate navigasi.
 
 ## Data penelitian
 
